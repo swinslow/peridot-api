@@ -8,4 +8,3 @@ ADD . /obsidian-api
 RUN go get -v ./...
 RUN go build
 RUN go install github.com/swinslow/obsidian-api
-RUN obsidian-api

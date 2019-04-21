@@ -1,0 +1,10 @@
+version: '3'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    #command: ["./utils/wait-for-it/wait-for-it.sh", "db:5432", "--", "/go/bin/api"]
+    volumes:
+      - .:/obsidian-api

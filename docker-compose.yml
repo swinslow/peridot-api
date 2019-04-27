@@ -5,7 +5,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: ["./utils/wait-for-it/wait-for-it.sh", "db:9501", "--", "/go/bin/obsidian-api"]
+    command: ["./utils/wait-for-it/wait-for-it.sh", "db:5432", "--", "/go/bin/obsidian-api"]
     volumes:
       - .:/obsidian-api
     depends_on:
@@ -16,6 +16,6 @@ services:
     environment:
       POSTGRES_DB: dev
       POSTGRES_USER: postgres-dev
-    ports:
-      - 9501:5432
+    #ports:
+    #  - 9501:5432
 

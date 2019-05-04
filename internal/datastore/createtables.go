@@ -2,7 +2,8 @@
 
 package datastore
 
-// CreateTableUsers creates the users table if it does not already exist.
+// CreateTableUsers creates the users table if it does not
+// already exist.
 func (db *DB) CreateTableUsers() error {
 	_, err := db.sqldb.Exec(`
 		CREATE TABLE IF NOT EXISTS users (
@@ -10,6 +11,19 @@ func (db *DB) CreateTableUsers() error {
 			email TEXT NOT NULL,
 			name TEXT NOT NULL,
 			access_level INTEGER NOT NULL
+		)
+	`)
+	return err
+}
+
+// CreateTableProjects creates the projects table if it
+// does not already exist.
+func (db *DB) CreateTableProjects() error {
+	_, err := db.sqldb.Exec(`
+		CREATE TABLE IF NOT EXISTS projects (
+			id SERIAL PRIMARY KEY,
+			name TEXT NOT NULL,
+			fullname TEXT NOT NULL
 		)
 	`)
 	return err

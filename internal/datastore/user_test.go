@@ -220,7 +220,7 @@ func TestShouldAddUser(t *testing.T) {
 	stmt := "INSERT INTO users"
 	mock.ExpectExec(stmt).
 		WithArgs(192304, "johndoe@example.com", "John Doe", AccessCommenter).
-		WillReturnResult(sqlmock.NewResult(1, 1))
+		WillReturnResult(sqlmock.NewResult(0, 1))
 
 	// run the tested function
 	err = db.AddUser(192304, "John Doe", "johndoe@example.com", AccessCommenter)
@@ -351,7 +351,7 @@ func TestCanUnmarshalAdminUserFromJSON(t *testing.T) {
 		t.Errorf("expected %v, got %v", "janedoe@example.com", user.Email)
 	}
 	if user.Name != "Jane Doe" {
-		t.Errorf("expected %v, got %v", "janedoe@example.com", user.Name)
+		t.Errorf("expected %v, got %v", "Jane Doe", user.Name)
 	}
 	if user.AccessLevel != AccessAdmin {
 		t.Errorf("expected %v, got %v", AccessAdmin, user.AccessLevel)
@@ -375,7 +375,7 @@ func TestCanUnmarshalNonAdminUserFromJSON(t *testing.T) {
 		t.Errorf("expected %v, got %v", "johndoe@example.com", user.Email)
 	}
 	if user.Name != "John Doe" {
-		t.Errorf("expected %v, got %v", "johndoe@example.com", user.Name)
+		t.Errorf("expected %v, got %v", "John Doe", user.Name)
 	}
 	if user.AccessLevel != AccessCommenter {
 		t.Errorf("expected %v, got %v", AccessCommenter, user.AccessLevel)

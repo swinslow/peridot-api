@@ -69,7 +69,7 @@ func (db *DB) UpdateProject(id uint32, newName string, newFullname string) error
 	var err error
 	var result sql.Result
 
-	// FIXME consider whether to move out into one-time-prepared statement
+	// FIXME consider whether to move out into one-time-prepared statements
 	if newName != "" && newFullname != "" {
 		stmt, err := db.sqldb.Prepare("UPDATE projects SET name = $1, fullname = $2 WHERE id = $3")
 		if err != nil {

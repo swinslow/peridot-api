@@ -28,3 +28,18 @@ func (db *DB) CreateTableProjects() error {
 	`)
 	return err
 }
+
+// CreateTableSubprojects creates the subprojects table
+// if it does not already exist.
+func (db *DB) CreateTableSubprojects() error {
+	_, err := db.sqldb.Exec(`
+		CREATE TABLE IF NOT EXISTS subprojects (
+			id SERIAL PRIMARY KEY,
+			project_id INTEGER NOT NULL,
+			name TEXT NOT NULL,
+			fullname TEXT NOT NULL,
+			FOREIGN KEY (project_id) REFERENCES projects (id)
+		)
+	`)
+	return err
+}

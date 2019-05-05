@@ -58,3 +58,17 @@ func (db *DB) CreateTableRepos() error {
 	`)
 	return err
 }
+
+// CreateTableRepoBranches creates the repo_branches table
+// if it does not already exist.
+func (db *DB) CreateTableRepoBranches() error {
+	_, err := db.sqldb.Exec(`
+		CREATE TABLE IF NOT EXISTS repo_branches (
+			repo_id INTEGER,
+			branch TEXT,
+			PRIMARY KEY (repo_id, branch),
+			FOREIGN KEY (repo_id) REFERENCES repos (id)
+		)
+	`)
+	return err
+}

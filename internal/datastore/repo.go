@@ -12,7 +12,7 @@ import (
 type Repo struct {
 	// ID is the unique ID for this repo.
 	ID uint32 `json:"id"`
-	// ID is the unique ID for this repo's subproject.
+	// SubprojectID is the unique ID for this repo's subproject.
 	SubprojectID uint32 `json:"subproject_id"`
 	// Name is this repo's reference name.
 	Name string `json:"name"`

@@ -85,4 +85,17 @@ type Datastore interface {
 	// DeleteRepo deletes an existing Repo with the given ID.
 	// It returns nil on success or an error if failing.
 	DeleteRepo(id uint32) error
+
+	// ===== RepoBranches =====
+	// GetAllRepoBranchesForRepoID returns a slice of all repo
+	// branches in the database for the given Repo ID.
+	GetAllRepoBranchesForRepoID(repoID uint32) ([]*RepoBranch, error)
+	// AddRepoBranch adds a new repo branch as specified,
+	// referencing the designated Repo. It returns nil on
+	// success or an error if failing.
+	AddRepoBranch(repoID uint32, branch string) error
+	// DeleteRepoBranch deletes an existing RepoBranch with
+	// the given branch name for the given repo ID.
+	// It returns nil on success or an error if failing.
+	DeleteRepoBranch(repoID uint32, branch string) error
 }

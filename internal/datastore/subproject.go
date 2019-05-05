@@ -13,7 +13,7 @@ import (
 type Subproject struct {
 	// ID is the unique ID for this subproject.
 	ID uint32 `json:"id"`
-	// ID is the unique ID for this subproject's project.
+	// ProjectID is the unique ID for this subproject's project.
 	ProjectID uint32 `json:"project_id"`
 	// Name is this subproject's short name. Typically it should be
 	// a single set of alphanumeric characters without spaces.

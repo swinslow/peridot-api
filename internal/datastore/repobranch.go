@@ -12,9 +12,9 @@ import (
 // contains one or more RepoPulls.
 type RepoBranch struct {
 	// RepoID is the unique ID for this repo's subproject.
-	RepoID uint32
+	RepoID uint32 `json:"repo_id"`
 	// Branch is the branch name within this repo.
-	Branch string
+	Branch string `json:"branch"`
 }
 
 // GetAllRepoBranchesForRepoID returns a slice of all repo

@@ -3,6 +3,7 @@
 package datastore
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 
@@ -163,5 +164,64 @@ func TestShouldFailDeleteRepoBranchWithUnknownRepoIDBranchPair(t *testing.T) {
 	err = mock.ExpectationsWereMet()
 	if err != nil {
 		t.Errorf("unfulfilled expectations: %v", err)
+	}
+}
+
+// ===== JSON marshalling and unmarshalling =====
+func TestCanMarshalRepoBranchToJSON(t *testing.T) {
+	rb := &RepoBranch{
+		RepoID: 17,
+		Branch: "dev-1.12",
+	}
+
+	js, err := json.Marshal(rb)
+	if err != nil {
+		t.Fatalf("got non-nil error: %v", err)
+	}
+
+	// read back in as empty interface to check values
+	// should be a map whose keys are strings, values are empty interface values
+	// per https://blog.golang.org/json-and-go
+	var mapGot interface{}
+	err = json.Unmarshal(js, &mapGot)
+	if err != nil {
+		t.Fatalf("got non-nil error: %v", err)
+	}
+	mGot := mapGot.(map[string]interface{})
+
+	// check for expected values
+	if float64(rb.RepoID) != mGot["repo_id"].(float64) {
+		t.Errorf("expected %v, got %v", float64(rb.RepoID), mGot["repo_id"].(float64))
+	}
+	if rb.Branch != mGot["branch"].(string) {
+		t.Errorf("expected %v, got %v", rb.Branch, mGot["branch"].(string))
+	}
+}
+
+func TestCanUnmarshalRepoBranchFromJSON(t *testing.T) {
+	rb := &RepoBranch{}
+	js := []byte(`{"repo_id":17, "branch":"dev-1.15"}`)
+
+	err := json.Unmarshal(js, rb)
+	if err != nil {
+		t.Fatalf("got non-nil error: %v", err)
+	}
+
+	// check values
+	if rb.RepoID != 17 {
+		t.Errorf("expected %v, got %v", 17, rb.RepoID)
+	}
+	if rb.Branch != "dev-1.15" {
+		t.Errorf("expected %v, got %v", "dev-1.15", rb.Branch)
+	}
+}
+
+func TestCannotUnmarshalRepoBranchWithNegativeRepoIDFromJSON(t *testing.T) {
+	rb := &RepoBranch{}
+	js := []byte(`{"repo_id":-92841, "branch":"OOPS"}`)
+
+	err := json.Unmarshal(js, rb)
+	if err == nil {
+		t.Fatalf("expected non-nil error, got nil")
 	}
 }

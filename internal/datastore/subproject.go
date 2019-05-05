@@ -71,6 +71,22 @@ func (db *DB) GetAllSubprojectsForProjectID(projectID uint32) ([]*Subproject, er
 	return subprojects, nil
 }
 
+// GetSubprojectByID returns the Subproject with the given ID, or nil
+// and an error if not found.
+func (db *DB) GetSubprojectByID(id uint32) (*Subproject, error) {
+	var sp Subproject
+	err := db.sqldb.QueryRow("SELECT id, project_id, name, fullname FROM subprojects WHERE id = $1", id).
+		Scan(&sp.ID, &sp.ProjectID, &sp.Name, &sp.Fullname)
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("no subproject found with ID %v", id)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return &sp, nil
+}
+
 // AddSubproject adds a new subproject with the given short name and
 // full name, referencing the designated Project. It returns the new
 // subproject's ID on success or an error if failing.

@@ -118,6 +118,77 @@ func TestShouldGetAllReposForOneSubproject(t *testing.T) {
 	}
 }
 
+func TestShouldGetRepoByID(t *testing.T) {
+	// set up mock
+	sqldb, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("got error when creating db mock: %v", err)
+	}
+	defer sqldb.Close()
+	db := DB{sqldb: sqldb}
+
+	sentRows := sqlmock.NewRows([]string{"id", "subproject_id", "name", "address"}).
+		AddRow(3, 3, "aai/aai-common", "https://gerrit.onap.org/r/aai/aai-common")
+	mock.ExpectQuery(`[SELECT id, subproject_id, name, address FROM repos WHERE id = \$1]`).
+		WithArgs(3).
+		WillReturnRows(sentRows)
+
+	// run the tested function
+	repo, err := db.GetRepoByID(3)
+	if err != nil {
+		t.Fatalf("expected nil error, got %v", err)
+	}
+
+	// check sqlmock expectations
+	err = mock.ExpectationsWereMet()
+	if err != nil {
+		t.Errorf("unfulfilled expectations: %v", err)
+	}
+
+	// and check returned values
+	if repo.ID != 3 {
+		t.Errorf("expected %v, got %v", 3, repo.ID)
+	}
+	if repo.SubprojectID != 3 {
+		t.Errorf("expected %v, got %v", 3, repo.SubprojectID)
+	}
+	if repo.Name != "aai/aai-common" {
+		t.Errorf("expected %v, got %v", "aai/aai-common", repo.Name)
+	}
+	if repo.Address != "https://gerrit.onap.org/r/aai/aai-common" {
+		t.Errorf("expected %v, got %v", "https://gerrit.onap.org/r/aai/aai-common", repo.Address)
+	}
+}
+
+func TestShouldFailGetRepoByIDForUnknownID(t *testing.T) {
+	// set up mock
+	sqldb, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("got error when creating db mock: %v", err)
+	}
+	defer sqldb.Close()
+	db := DB{sqldb: sqldb}
+
+	mock.ExpectQuery(`[SELECT id, subproject_id, name, address FROM repos WHERE id = \$1]`).
+		WithArgs(413).
+		WillReturnRows(sqlmock.NewRows([]string{}))
+
+	// run the tested function
+	repo, err := db.GetRepoByID(413)
+	if repo != nil {
+		t.Fatalf("expected nil repo, got %v", repo)
+	}
+	if err == nil {
+		t.Fatalf("expected non-nil error, got nil")
+	}
+
+	// check sqlmock expectations
+	err = mock.ExpectationsWereMet()
+	if err != nil {
+		t.Errorf("unfulfilled expectations: %v", err)
+	}
+}
+
 func TestShouldAddRepo(t *testing.T) {
 	// set up mock
 	sqldb, mock, err := sqlmock.New()

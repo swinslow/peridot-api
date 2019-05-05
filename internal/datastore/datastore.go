@@ -24,6 +24,9 @@ type Datastore interface {
 	// ===== Projects =====
 	// GetAllProjects returns a slice of all projects in the database.
 	GetAllProjects() ([]*Project, error)
+	// GetProjectByID returns the Project with the given ID, or nil
+	// and an error if not found.
+	GetProjectByID(id uint32) (*Project, error)
 	// AddProject adds a new Project with the given short name and
 	// full name. It returns the new project's ID on success or an
 	// error if failing.
@@ -44,6 +47,9 @@ type Datastore interface {
 	// GetAllSubprojectsForProjectID returns a slice of all
 	// subprojects in the database for the given project ID.
 	GetAllSubprojectsForProjectID(projectID uint32) ([]*Subproject, error)
+	// GetSubprojectByID returns the Subproject with the given ID, or nil
+	// and an error if not found.
+	GetSubprojectByID(id uint32) (*Subproject, error)
 	// AddSubproject adds a new subproject with the given short
 	// name and full name, referencing the designated Project. It
 	// returns the new subproject's ID on success or an error if
@@ -69,6 +75,9 @@ type Datastore interface {
 	// GetAllReposForSubprojectID returns a slice of all repos in
 	// the database for the given subproject ID.
 	GetAllReposForSubprojectID(subprojectID uint32) ([]*Repo, error)
+	// GetRepoByID returns the Repo with the given ID, or nil
+	// and an error if not found.
+	GetRepoByID(id uint32) (*Repo, error)
 	// AddRepo adds a new repo with the given name and address,
 	// referencing the designated Subproject. It returns the new
 	// repo's ID on success or an error if failing.

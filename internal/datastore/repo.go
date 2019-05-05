@@ -70,6 +70,22 @@ func (db *DB) GetAllReposForSubprojectID(subprojectID uint32) ([]*Repo, error) {
 	return repos, nil
 }
 
+// GetRepoByID returns the Repo with the given ID, or nil
+// and an error if not found.
+func (db *DB) GetRepoByID(id uint32) (*Repo, error) {
+	var repo Repo
+	err := db.sqldb.QueryRow("SELECT id, subproject_id, name, address FROM repos WHERE id = $1", id).
+		Scan(&repo.ID, &repo.SubprojectID, &repo.Name, &repo.Address)
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("no repo found with ID %v", id)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return &repo, nil
+}
+
 // AddRepo adds a new repo with the given name and address,
 // referencing the designated Subproject. It returns the new
 // repo's ID on success or an error if failing.

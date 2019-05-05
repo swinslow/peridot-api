@@ -132,6 +132,77 @@ func TestShouldGetAllSubprojectsForOneProject(t *testing.T) {
 	}
 }
 
+func TestShouldGetSubprojectByID(t *testing.T) {
+	// set up mock
+	sqldb, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("got error when creating db mock: %v", err)
+	}
+	defer sqldb.Close()
+	db := DB{sqldb: sqldb}
+
+	sentRows := sqlmock.NewRows([]string{"id", "project_id", "name", "fullname"}).
+		AddRow(2, 1, "prometheus", "Prometheus")
+	mock.ExpectQuery(`[SELECT id, project_id, name, fullname FROM subprojects WHERE id = \$1]`).
+		WithArgs(2).
+		WillReturnRows(sentRows)
+
+	// run the tested function
+	sp, err := db.GetSubprojectByID(2)
+	if err != nil {
+		t.Fatalf("expected nil error, got %v", err)
+	}
+
+	// check sqlmock expectations
+	err = mock.ExpectationsWereMet()
+	if err != nil {
+		t.Errorf("unfulfilled expectations: %v", err)
+	}
+
+	// and check returned values
+	if sp.ID != 2 {
+		t.Errorf("expected %v, got %v", 2, sp.ID)
+	}
+	if sp.ProjectID != 1 {
+		t.Errorf("expected %v, got %v", 1, sp.ProjectID)
+	}
+	if sp.Name != "prometheus" {
+		t.Errorf("expected %v, got %v", "prometheus", sp.Name)
+	}
+	if sp.Fullname != "Prometheus" {
+		t.Errorf("expected %v, got %v", "Prometheus", sp.Fullname)
+	}
+}
+
+func TestShouldFailGetSubprojectByIDForUnknownID(t *testing.T) {
+	// set up mock
+	sqldb, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("got error when creating db mock: %v", err)
+	}
+	defer sqldb.Close()
+	db := DB{sqldb: sqldb}
+
+	mock.ExpectQuery(`[SELECT id, project_id, name, fullname FROM subprojects WHERE id = \$1]`).
+		WithArgs(413).
+		WillReturnRows(sqlmock.NewRows([]string{}))
+
+	// run the tested function
+	sp, err := db.GetSubprojectByID(413)
+	if sp != nil {
+		t.Fatalf("expected nil subproject, got %v", sp)
+	}
+	if err == nil {
+		t.Fatalf("expected non-nil error, got nil")
+	}
+
+	// check sqlmock expectations
+	err = mock.ExpectationsWereMet()
+	if err != nil {
+		t.Errorf("unfulfilled expectations: %v", err)
+	}
+}
+
 func TestShouldAddSubproject(t *testing.T) {
 	// set up mock
 	sqldb, mock, err := sqlmock.New()

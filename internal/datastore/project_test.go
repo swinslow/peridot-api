@@ -72,6 +72,74 @@ func TestShouldGetAllProjects(t *testing.T) {
 	}
 }
 
+func TestShouldGetProjectByID(t *testing.T) {
+	// set up mock
+	sqldb, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("got error when creating db mock: %v", err)
+	}
+	defer sqldb.Close()
+	db := DB{sqldb: sqldb}
+
+	sentRows := sqlmock.NewRows([]string{"id", "name", "fullname"}).
+		AddRow(2, "onap", "Open Network Automation Platform (ONAP)")
+	mock.ExpectQuery(`[SELECT id, name, fullname FROM projects WHERE id = \$1]`).
+		WithArgs(2).
+		WillReturnRows(sentRows)
+
+	// run the tested function
+	project, err := db.GetProjectByID(2)
+	if err != nil {
+		t.Fatalf("expected nil error, got %v", err)
+	}
+
+	// check sqlmock expectations
+	err = mock.ExpectationsWereMet()
+	if err != nil {
+		t.Errorf("unfulfilled expectations: %v", err)
+	}
+
+	// and check returned values
+	if project.ID != 2 {
+		t.Errorf("expected %v, got %v", 2, project.ID)
+	}
+	if project.Name != "onap" {
+		t.Errorf("expected %v, got %v", "onap", project.Name)
+	}
+	if project.Fullname != "Open Network Automation Platform (ONAP)" {
+		t.Errorf("expected %v, got %v", "Open Network Automation Platform (ONAP)", project.Fullname)
+	}
+}
+
+func TestShouldFailGetProjectByIDForUnknownID(t *testing.T) {
+	// set up mock
+	sqldb, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("got error when creating db mock: %v", err)
+	}
+	defer sqldb.Close()
+	db := DB{sqldb: sqldb}
+
+	mock.ExpectQuery(`[SELECT id, name, fullname FROM projects WHERE id = \$1]`).
+		WithArgs(413).
+		WillReturnRows(sqlmock.NewRows([]string{}))
+
+	// run the tested function
+	project, err := db.GetProjectByID(413)
+	if project != nil {
+		t.Fatalf("expected nil project, got %v", project)
+	}
+	if err == nil {
+		t.Fatalf("expected non-nil error, got nil")
+	}
+
+	// check sqlmock expectations
+	err = mock.ExpectationsWereMet()
+	if err != nil {
+		t.Errorf("unfulfilled expectations: %v", err)
+	}
+}
+
 func TestShouldAddProject(t *testing.T) {
 	// set up mock
 	sqldb, mock, err := sqlmock.New()

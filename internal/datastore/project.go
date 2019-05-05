@@ -43,6 +43,22 @@ func (db *DB) GetAllProjects() ([]*Project, error) {
 	return projects, nil
 }
 
+// GetProjectByID returns the Project with the given ID, or nil
+// and an error if not found.
+func (db *DB) GetProjectByID(id uint32) (*Project, error) {
+	var project Project
+	err := db.sqldb.QueryRow("SELECT id, name, fullname FROM projects WHERE id = $1", id).
+		Scan(&project.ID, &project.Name, &project.Fullname)
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("no project found with ID %v", id)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return &project, nil
+}
+
 // AddProject adds a new Project with the given short name and
 // full name. It returns the new project's ID on success or an
 // error if failing.

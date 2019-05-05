@@ -43,3 +43,18 @@ func (db *DB) CreateTableSubprojects() error {
 	`)
 	return err
 }
+
+// CreateTableRepos creates the repos table if it does
+// not already exist.
+func (db *DB) CreateTableRepos() error {
+	_, err := db.sqldb.Exec(`
+		CREATE TABLE IF NOT EXISTS repos (
+			id SERIAL PRIMARY KEY,
+			subproject_id INTEGER NOT NULL,
+			name TEXT NOT NULL,
+			address TEXT NOT NULL,
+			FOREIGN KEY (subproject_id) REFERENCES subprojects (id)
+		)
+	`)
+	return err
+}

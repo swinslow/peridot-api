@@ -56,10 +56,33 @@ type Datastore interface {
 	// failing.
 	UpdateSubproject(id uint32, newName string, newFullname string) error
 	// UpdateSubprojectProjectID updates an existing Subproject
-	// with the given ID, changing its corresponding Project iD.
+	// with the given ID, changing its corresponding Project ID.
 	// It returns nil on success or an error if failing.
 	UpdateSubprojectProjectID(id uint32, newProjectID uint32) error
 	// DeleteSubproject deletes an existing Subproject with the
 	// given ID. It returns nil on success or an error if failing.
 	DeleteSubproject(id uint32) error
+
+	// ===== Repos =====
+	// GetAllRepos returns a slice of all repos in the database.
+	GetAllRepos() ([]*Repo, error)
+	// GetAllReposForSubprojectID returns a slice of all repos in
+	// the database for the given subproject ID.
+	GetAllReposForSubprojectID(subprojectID uint32) ([]*Repo, error)
+	// AddRepo adds a new repo with the given name and address,
+	// referencing the designated Subproject. It returns the new
+	// repo's ID on success or an error if failing.
+	AddRepo(subprojectID uint32, name string, address string) (uint32, error)
+	// UpdateRepo updates an existing Repo with the given ID,
+	// changing to the specified name and address. If an empty
+	// string is passed, the existing value will remain unchanged.
+	// It returns nil on success or an error if failing.
+	UpdateRepo(id uint32, newName string, newAddress string) error
+	// UpdateRepoSubprojectID updates an existing Repo with the
+	// given ID, changing its corresponding Subproject ID.
+	// It returns nil on success or an error if failing.
+	UpdateRepoSubprojectID(id uint32, newSubprojectID uint32) error
+	// DeleteRepo deletes an existing Repo with the given ID.
+	// It returns nil on success or an error if failing.
+	DeleteRepo(id uint32) error
 }

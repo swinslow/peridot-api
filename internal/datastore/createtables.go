@@ -72,3 +72,21 @@ func (db *DB) CreateTableRepoBranches() error {
 	`)
 	return err
 }
+
+// CreateTableRepoPulls creates the repo_pulls table if it
+// does not already exist.
+func (db *DB) CreateTableRepoPulls() error {
+	_, err := db.sqldb.Exec(`
+		CREATE TABLE IF NOT EXISTS repo_pulls (
+			id SERIAL PRIMARY KEY,
+			repo_id INTEGER NOT NULL,
+			branch TEXT NOT NULL,
+			pulled_at TIMESTAMP WITH TIME ZONE,
+			commit TEXT,
+			tag TEXT,
+			spdx_id TEXT,
+			FOREIGN KEY (repo_id, branch) REFERENCES repo_branches (repo_id, branch)
+		)
+	`)
+	return err
+}

@@ -11,7 +11,7 @@ import (
 // RepoBranch is contained within one Repo, and a RepoBranch
 // contains one or more RepoPulls.
 type RepoBranch struct {
-	// RepoID is the unique ID for this repo's subproject.
+	// RepoID is the unique ID for this repo.
 	RepoID uint32 `json:"repo_id"`
 	// Branch is the branch name within this repo.
 	Branch string `json:"branch"`

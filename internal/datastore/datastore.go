@@ -3,6 +3,8 @@
 // SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later
 package datastore
 
+import "time"
+
 // Datastore defines the interface to be implemented by models
 // for database tables, using either a backing database (production)
 // or mocks (test).
@@ -107,4 +109,21 @@ type Datastore interface {
 	// the given branch name for the given repo ID.
 	// It returns nil on success or an error if failing.
 	DeleteRepoBranch(repoID uint32, branch string) error
+
+	// ===== RepoPulls =====
+	// GetAllRepoPullsForRepoBranch returns a slice of all repo
+	// pulls in the database for the given Repo ID and branch.
+	GetAllRepoPullsForRepoBranch(repoID uint32, branch string) ([]*RepoPull, error)
+	// GetRepoPullByID returns the RepoPull with the given ID,
+	// or nil and an error if not found.
+	GetRepoPullByID(id uint32) (*RepoPull, error)
+	// AddRepoPull adds a new repo pull as specified,
+	// referencing the designated Repo, branch and other data.
+	// It returns the new repo pull's ID on success or an
+	// error if failing.
+	AddRepoPull(repoID uint32, branch string, pulledAt time.Time, commit string, tag string, spdxID string) (uint32, error)
+	// DeleteRepoPull deletes an existing RepoPull with the
+	// given ID. It returns nil on success or an error if
+	// failing.
+	DeleteRepoPull(id uint32) error
 }

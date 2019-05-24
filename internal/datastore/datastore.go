@@ -126,4 +126,25 @@ type Datastore interface {
 	// given ID. It returns nil on success or an error if
 	// failing.
 	DeleteRepoPull(id uint32) error
+
+	// ===== FileHashes =====
+	// GetFileHashByID returns the FileHash with the given ID,
+	// or nil and an error if not found.
+	GetFileHashByID(id uint64) (*FileHash, error)
+	// GetFileHashesByIDs returns a slice of FileHashes with
+	// the given IDs, or an empty slice if none are found.
+	// NOT CURRENTLY TESTED; NEED TO MODIFY FOR USING pq.Array
+	/*GetFileHashesByIDs(ids []uint64) ([]*FileHash, error)*/
+
+	// AddFileHash adds a new file hash as specified,
+	// requiring its SHA256 and SHA1 values. It returns the
+	// new file hash's ID on success or an error if failing.
+	AddFileHash(sha256 string, sha1 string) (uint64, error)
+	// FIXME will also want one to add a slice of file hashes
+	// FIXME all at once
+
+	// DeleteFileHash deletes an existing file hash with
+	// the given ID. It returns nil on success or an error if
+	// failing.
+	DeleteFileHash(id uint64) error
 }

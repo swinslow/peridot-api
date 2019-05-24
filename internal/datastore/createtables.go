@@ -90,3 +90,16 @@ func (db *DB) CreateTableRepoPulls() error {
 	`)
 	return err
 }
+
+// CreateTableFileHashes creates the file_hashes table if it
+// does not already exist.
+func (db *DB) CreateTableFileHashes() error {
+	_, err := db.sqldb.Exec(`
+		CREATE TABLE IF NOT EXISTS file_hashes (
+			id SERIAL PRIMARY KEY,
+			hash_s256 TEXT,
+			hash_s1 TEXT
+		)
+	`)
+	return err
+}

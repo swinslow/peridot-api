@@ -103,3 +103,19 @@ func (db *DB) CreateTableFileHashes() error {
 	`)
 	return err
 }
+
+// CreateTableFileInstances creates the file_instances table if it
+// does not already exist.
+func (db *DB) CreateTableFileInstances() error {
+	_, err := db.sqldb.Exec(`
+		CREATE TABLE IF NOT EXISTS file_instances (
+			id SERIAL PRIMARY KEY,
+			repopull_id INTEGER NOT NULL,
+			filehash_id INTEGER NOT NULL,
+			path TEXT NOT NULL,
+			FOREIGN KEY (repopull_id) REFERENCES repo_pulls (id),
+			FOREIGN KEY (filehash_id) REFERENCES file_hashes (id)
+		)
+	`)
+	return err
+}

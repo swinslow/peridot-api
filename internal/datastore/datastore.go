@@ -147,4 +147,18 @@ type Datastore interface {
 	// the given ID. It returns nil on success or an error if
 	// failing.
 	DeleteFileHash(id uint64) error
+
+	// ===== FileInstancees =====
+	// GetFileInstanceByID returns the FileInstance with the given ID,
+	// or nil and an error if not found.
+	GetFileInstanceByID(id uint64) (*FileInstance, error)
+	// AddFileInstance adds a new file instance as specified,
+	// requiring its parent RepoPull ID and path within it,
+	// and the corresponding FileHash ID. It returns the new
+	// file instance's ID on success or an error if failing.
+	AddFileInstance(repoPullID uint32, fileHashID uint64, path string) (uint64, error)
+	// DeleteFileInstance deletes an existing file instance
+	// with the given ID. It returns nil on success or an
+	// if failing.
+	DeleteFileInstance(id uint64) error
 }

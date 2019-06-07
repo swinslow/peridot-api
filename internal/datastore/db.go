@@ -28,3 +28,55 @@ func NewDB(srcName string) (*DB, error) {
 	db := &DB{sqldb: sqldb}
 	return db, nil
 }
+
+// InitNewDB creates all the obsidian database tables. It returns
+// nil on success or any error encountered.
+func InitNewDB(db *DB) error {
+	// create schema
+	_, err := db.sqldb.Exec(`CREATE SCHEMA IF NOT EXISTS obsidian`)
+	if err != nil {
+		return err
+	}
+
+	err = db.CreateTableUsers()
+	if err != nil {
+		return err
+	}
+
+	err = db.CreateTableProjects()
+	if err != nil {
+		return err
+	}
+
+	err = db.CreateTableSubprojects()
+	if err != nil {
+		return err
+	}
+
+	err = db.CreateTableRepos()
+	if err != nil {
+		return err
+	}
+
+	err = db.CreateTableRepoBranches()
+	if err != nil {
+		return err
+	}
+
+	err = db.CreateTableRepoPulls()
+	if err != nil {
+		return err
+	}
+
+	err = db.CreateTableFileHashes()
+	if err != nil {
+		return err
+	}
+
+	err = db.CreateTableFileInstances()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

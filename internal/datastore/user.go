@@ -18,7 +18,7 @@ type User struct {
 
 // GetAllUsers returns a slice of all users in the database.
 func (db *DB) GetAllUsers() ([]*User, error) {
-	rows, err := db.sqldb.Query("SELECT id, email, name, access_level FROM users ORDER BY id")
+	rows, err := db.sqldb.Query("SELECT id, email, name, access_level FROM obsidian.users ORDER BY id")
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +45,7 @@ func (db *DB) GetAllUsers() ([]*User, error) {
 func (db *DB) GetUserByID(id uint32) (*User, error) {
 	var user User
 	var ualInt int
-	err := db.sqldb.QueryRow("SELECT id, email, name, access_level FROM users WHERE id = $1", id).
+	err := db.sqldb.QueryRow("SELECT id, email, name, access_level FROM obsidian.users WHERE id = $1", id).
 		Scan(&user.ID, &user.Email, &user.Name, &ualInt)
 	if err != nil {
 		return nil, err
@@ -66,7 +66,7 @@ func (db *DB) GetUserByID(id uint32) (*User, error) {
 func (db *DB) GetUserByEmail(email string) (*User, error) {
 	var user User
 	var ualInt int
-	err := db.sqldb.QueryRow("SELECT id, email, name, access_level FROM users WHERE email = $1", email).
+	err := db.sqldb.QueryRow("SELECT id, email, name, access_level FROM obsidian.users WHERE email = $1", email).
 		Scan(&user.ID, &user.Email, &user.Name, &ualInt)
 	if err != nil {
 		return nil, err
@@ -98,7 +98,7 @@ func (db *DB) AddUser(id uint32, name string, email string, accessLevel UserAcce
 	ualInt := IntFromUserAccessLevel(accessLevel)
 
 	// move out into one-time-prepared statement?
-	stmt, err := db.sqldb.Prepare("INSERT INTO users(id, email, name, access_level) VALUES ($1, $2, $3, $4)")
+	stmt, err := db.sqldb.Prepare("INSERT INTO obsidian.users(id, email, name, access_level) VALUES ($1, $2, $3, $4)")
 	if err != nil {
 		return err
 	}

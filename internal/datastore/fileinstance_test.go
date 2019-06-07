@@ -28,7 +28,7 @@ func TestShouldGetFileInstanceByID(t *testing.T) {
 
 	sentRows := sqlmock.NewRows([]string{"id", "repopull_id", "filehash_id", "path"}).
 		AddRow(fiWant.ID, fiWant.RepoPullID, fiWant.FileHashID, fiWant.Path)
-	mock.ExpectQuery(`SELECT id, repopull_id, filehash_id, path FROM file_instances WHERE id = \$1`).
+	mock.ExpectQuery(`SELECT id, repopull_id, filehash_id, path FROM obsidian.file_instances WHERE id = \$1`).
 		WithArgs(fiWant.ID).
 		WillReturnRows(sentRows)
 
@@ -68,7 +68,7 @@ func TestShouldFailGetFileInstanceByIDForUnknownID(t *testing.T) {
 	defer sqldb.Close()
 	db := DB{sqldb: sqldb}
 
-	mock.ExpectQuery(`SELECT id, repopull_id, filehash_id, path FROM file_instances WHERE id = \$1`).
+	mock.ExpectQuery(`SELECT id, repopull_id, filehash_id, path FROM obsidian.file_instances WHERE id = \$1`).
 		WithArgs(413).
 		WillReturnRows(sqlmock.NewRows([]string{}))
 
@@ -97,9 +97,9 @@ func TestShouldAddFileInstance(t *testing.T) {
 	defer sqldb.Close()
 	db := DB{sqldb: sqldb}
 
-	regexStmt := `[INSERT INTO file_instances(repopull_id, filehash_id, path) VALUES (\$1, \$2, \$3) RETURNING id]`
+	regexStmt := `[INSERT INTO obsidian.file_instances(repopull_id, filehash_id, path) VALUES (\$1, \$2, \$3) RETURNING id]`
 	mock.ExpectPrepare(regexStmt)
-	stmt := "INSERT INTO file_instances"
+	stmt := "INSERT INTO obsidian.file_instances"
 	mock.ExpectQuery(stmt).
 		WithArgs(14, 285, "/tmp/whatever.txt").
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(3615))
@@ -131,12 +131,12 @@ func TestShouldFailAddFileInstanceWithUnknownRepoPull(t *testing.T) {
 	defer sqldb.Close()
 	db := DB{sqldb: sqldb}
 
-	regexStmt := `[INSERT INTO file_instances(repopull_id, filehash_id, path) VALUES (\$1, \$2, \$3) RETURNING id]`
+	regexStmt := `[INSERT INTO obsidian.file_instances(repopull_id, filehash_id, path) VALUES (\$1, \$2, \$3) RETURNING id]`
 	mock.ExpectPrepare(regexStmt)
-	stmt := "INSERT INTO file_instances"
+	stmt := "INSERT INTO obsidian.file_instances"
 	mock.ExpectQuery(stmt).
 		WithArgs(617, 285, "/tmp/unknown-repo-pull-id").
-		WillReturnError(fmt.Errorf("pq: insert or update on table \"file_instances\" violates foreign key constraint \"file_instances_repopull_id_fkey\""))
+		WillReturnError(fmt.Errorf("pq: insert or update on table \"obsidian.file_instances\" violates foreign key constraint \"obsidian.file_instances_repopull_id_fkey\""))
 
 	// run the tested function
 	_, err = db.AddFileInstance(617, 285, "/tmp/unknown-repo-pull-id")
@@ -160,12 +160,12 @@ func TestShouldFailAddFileInstanceWithUnknownFileHash(t *testing.T) {
 	defer sqldb.Close()
 	db := DB{sqldb: sqldb}
 
-	regexStmt := `[INSERT INTO file_instances(repopull_id, filehash_id, path) VALUES (\$1, \$2, \$3) RETURNING id]`
+	regexStmt := `[INSERT INTO obsidian.file_instances(repopull_id, filehash_id, path) VALUES (\$1, \$2, \$3) RETURNING id]`
 	mock.ExpectPrepare(regexStmt)
-	stmt := "INSERT INTO file_instances"
+	stmt := "INSERT INTO obsidian.file_instances"
 	mock.ExpectQuery(stmt).
 		WithArgs(14, 617, "/tmp/unknown-file-hash-id").
-		WillReturnError(fmt.Errorf("pq: insert or update on table \"file_instances\" violates foreign key constraint \"file_instances_filehash_id_fkey\""))
+		WillReturnError(fmt.Errorf("pq: insert or update on table \"obsidian.file_instances\" violates foreign key constraint \"obsidian.file_instances_filehash_id_fkey\""))
 
 	// run the tested function
 	_, err = db.AddFileInstance(14, 617, "/tmp/unknown-file-hash-id")
@@ -189,9 +189,9 @@ func TestShouldDeleteFileInstance(t *testing.T) {
 	defer sqldb.Close()
 	db := DB{sqldb: sqldb}
 
-	regexStmt := `[DELETE FROM file_instances WHERE id = \$1]`
+	regexStmt := `[DELETE FROM obsidian.file_instances WHERE id = \$1]`
 	mock.ExpectPrepare(regexStmt)
-	stmt := "DELETE FROM file_instances"
+	stmt := "DELETE FROM obsidian.file_instances"
 	mock.ExpectExec(stmt).
 		WithArgs(14).
 		WillReturnResult(sqlmock.NewResult(0, 1))
@@ -218,9 +218,9 @@ func TestShouldFailDeleteFileInstanceWithUnknownID(t *testing.T) {
 	defer sqldb.Close()
 	db := DB{sqldb: sqldb}
 
-	regexStmt := `[DELETE FROM file_instances WHERE id = \$1]`
+	regexStmt := `[DELETE FROM obsidian.file_instances WHERE id = \$1]`
 	mock.ExpectPrepare(regexStmt)
-	stmt := "DELETE FROM file_instances"
+	stmt := "DELETE FROM obsidian.file_instances"
 	mock.ExpectExec(stmt).
 		WithArgs(413).
 		WillReturnResult(sqlmock.NewResult(0, 0))

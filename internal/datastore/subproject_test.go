@@ -26,7 +26,7 @@ func TestShouldGetAllSubprojects(t *testing.T) {
 		AddRow(4, 1, "grpc", "gRPC").
 		AddRow(5, 2, "sdnc", "Software Defined Network Controller (SDNC)").
 		AddRow(6, 3, "fabric", "Hyperledger Fabric")
-	mock.ExpectQuery("SELECT id, project_id, name, fullname FROM subprojects ORDER BY id").WillReturnRows(sentRows)
+	mock.ExpectQuery("SELECT id, project_id, name, fullname FROM obsidian.subprojects ORDER BY id").WillReturnRows(sentRows)
 
 	// run the tested function
 	gotRows, err := db.GetAllSubprojects()
@@ -85,7 +85,7 @@ func TestShouldGetAllSubprojectsForOneProject(t *testing.T) {
 		AddRow(1, 1, "kubernetes", "Kubernetes").
 		AddRow(2, 1, "prometheus", "Prometheus").
 		AddRow(4, 1, "grpc", "gRPC")
-	mock.ExpectQuery(`SELECT id, project_id, name, fullname FROM subprojects WHERE project_id = \$1 ORDER BY id`).
+	mock.ExpectQuery(`SELECT id, project_id, name, fullname FROM obsidian.subprojects WHERE project_id = \$1 ORDER BY id`).
 		WillReturnRows(sentRows)
 
 	// run the tested function
@@ -143,7 +143,7 @@ func TestShouldGetSubprojectByID(t *testing.T) {
 
 	sentRows := sqlmock.NewRows([]string{"id", "project_id", "name", "fullname"}).
 		AddRow(2, 1, "prometheus", "Prometheus")
-	mock.ExpectQuery(`[SELECT id, project_id, name, fullname FROM subprojects WHERE id = \$1]`).
+	mock.ExpectQuery(`[SELECT id, project_id, name, fullname FROM obsidian.subprojects WHERE id = \$1]`).
 		WithArgs(2).
 		WillReturnRows(sentRows)
 
@@ -183,7 +183,7 @@ func TestShouldFailGetSubprojectByIDForUnknownID(t *testing.T) {
 	defer sqldb.Close()
 	db := DB{sqldb: sqldb}
 
-	mock.ExpectQuery(`[SELECT id, project_id, name, fullname FROM subprojects WHERE id = \$1]`).
+	mock.ExpectQuery(`[SELECT id, project_id, name, fullname FROM obsidian.subprojects WHERE id = \$1]`).
 		WithArgs(413).
 		WillReturnRows(sqlmock.NewRows([]string{}))
 
@@ -212,9 +212,9 @@ func TestShouldAddSubproject(t *testing.T) {
 	defer sqldb.Close()
 	db := DB{sqldb: sqldb}
 
-	regexStmt := `[INSERT INTO subprojects(project_id, name, fullname) VALUES (\$1, \$2, \$3) RETURNING id]`
+	regexStmt := `[INSERT INTO obsidian.subprojects(project_id, name, fullname) VALUES (\$1, \$2, \$3) RETURNING id]`
 	mock.ExpectPrepare(regexStmt)
-	stmt := "INSERT INTO subprojects"
+	stmt := "INSERT INTO obsidian.subprojects"
 	mock.ExpectQuery(stmt).
 		WithArgs(1, "grpc", "gRPC").
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(4))
@@ -246,12 +246,12 @@ func TestShouldFailAddSubprojectWithUnknownProjectID(t *testing.T) {
 	defer sqldb.Close()
 	db := DB{sqldb: sqldb}
 
-	regexStmt := `[INSERT INTO subprojects(project_id, name, fullname) VALUES (\$1, \$2, \$3) RETURNING id]`
+	regexStmt := `[INSERT INTO obsidian.subprojects(project_id, name, fullname) VALUES (\$1, \$2, \$3) RETURNING id]`
 	mock.ExpectPrepare(regexStmt)
-	stmt := "INSERT INTO subprojects"
+	stmt := "INSERT INTO obsidian.subprojects"
 	mock.ExpectQuery(stmt).
 		WithArgs(17, "oops", "Unknown Project").
-		WillReturnError(fmt.Errorf("pq: insert or update on table \"subprojects\" violates foreign key constraint \"subprojects_project_id_fkey\""))
+		WillReturnError(fmt.Errorf("pq: insert or update on table \"obsidian.subprojects\" violates foreign key constraint \"obsidian.subprojects_project_id_fkey\""))
 
 	// run the tested function
 	_, err = db.AddSubproject(17, "oops", "Unknown Project")
@@ -275,9 +275,9 @@ func TestShouldUpdateSubprojectNameAndFullname(t *testing.T) {
 	defer sqldb.Close()
 	db := DB{sqldb: sqldb}
 
-	regexStmt := `[UPDATE subprojects SET name = \$1, fullname = \$2 WHERE id = \$3]`
+	regexStmt := `[UPDATE obsidian.subprojects SET name = \$1, fullname = \$2 WHERE id = \$3]`
 	mock.ExpectPrepare(regexStmt)
-	stmt := "UPDATE subprojects"
+	stmt := "UPDATE obsidian.subprojects"
 	mock.ExpectExec(stmt).
 		WithArgs("mysubprj", "My Subproject", 1).
 		WillReturnResult(sqlmock.NewResult(0, 1))
@@ -304,9 +304,9 @@ func TestShouldUpdateSubprojectNameOnly(t *testing.T) {
 	defer sqldb.Close()
 	db := DB{sqldb: sqldb}
 
-	regexStmt := `[UPDATE subprojects SET name = \$1 WHERE id = \$2]`
+	regexStmt := `[UPDATE obsidian.subprojects SET name = \$1 WHERE id = \$2]`
 	mock.ExpectPrepare(regexStmt)
-	stmt := "UPDATE subprojects"
+	stmt := "UPDATE obsidian.subprojects"
 	mock.ExpectExec(stmt).
 		WithArgs("mysubprj", 1).
 		WillReturnResult(sqlmock.NewResult(0, 1))
@@ -333,9 +333,9 @@ func TestShouldUpdateSubprojectFullnameOnly(t *testing.T) {
 	defer sqldb.Close()
 	db := DB{sqldb: sqldb}
 
-	regexStmt := `[UPDATE subprojects SET fullname = \$1 WHERE id = \$2]`
+	regexStmt := `[UPDATE obsidian.subprojects SET fullname = \$1 WHERE id = \$2]`
 	mock.ExpectPrepare(regexStmt)
-	stmt := "UPDATE subprojects"
+	stmt := "UPDATE obsidian.subprojects"
 	mock.ExpectExec(stmt).
 		WithArgs("My Subproject", 1).
 		WillReturnResult(sqlmock.NewResult(0, 1))
@@ -384,9 +384,9 @@ func TestShouldFailUpdateSubprojectWithUnknownID(t *testing.T) {
 	defer sqldb.Close()
 	db := DB{sqldb: sqldb}
 
-	regexStmt := `[UPDATE subprojects SET name = \$1, fullname = \$2 WHERE id = \$3]`
+	regexStmt := `[UPDATE obsidian.subprojects SET name = \$1, fullname = \$2 WHERE id = \$3]`
 	mock.ExpectPrepare(regexStmt)
-	stmt := "UPDATE subprojects"
+	stmt := "UPDATE obsidian.subprojects"
 	mock.ExpectExec(stmt).
 		WithArgs("oops", "wrong ID", 413).
 		WillReturnResult(sqlmock.NewResult(0, 0))
@@ -413,9 +413,9 @@ func TestShouldUpdateSubprojectProjectID(t *testing.T) {
 	defer sqldb.Close()
 	db := DB{sqldb: sqldb}
 
-	regexStmt := `[UPDATE subprojects SET project_id = \$1 WHERE id = \$2]`
+	regexStmt := `[UPDATE obsidian.subprojects SET project_id = \$1 WHERE id = \$2]`
 	mock.ExpectPrepare(regexStmt)
-	stmt := "UPDATE subprojects"
+	stmt := "UPDATE obsidian.subprojects"
 	mock.ExpectExec(stmt).
 		WithArgs(3, 1).
 		WillReturnResult(sqlmock.NewResult(0, 1))
@@ -442,12 +442,12 @@ func TestShouldFailUpdateSubprojectProjectIDToUnknownProjectID(t *testing.T) {
 	defer sqldb.Close()
 	db := DB{sqldb: sqldb}
 
-	regexStmt := `[UPDATE subprojects SET project_id = \$1 WHERE id = \$2]`
+	regexStmt := `[UPDATE obsidian.subprojects SET project_id = \$1 WHERE id = \$2]`
 	mock.ExpectPrepare(regexStmt)
-	stmt := "UPDATE subprojects"
+	stmt := "UPDATE obsidian.subprojects"
 	mock.ExpectExec(stmt).
 		WithArgs(17, 1).
-		WillReturnError(fmt.Errorf("pq: insert or update on table \"subprojects\" violates foreign key constraint \"subprojects_project_id_fkey\""))
+		WillReturnError(fmt.Errorf("pq: insert or update on table \"obsidian.subprojects\" violates foreign key constraint \"obsidian.subprojects_project_id_fkey\""))
 
 	// run the tested function
 	err = db.UpdateSubprojectProjectID(1, 17)
@@ -471,9 +471,9 @@ func TestShouldFailUpdateSubprojectProjectIDWithUnknownSubprojectID(t *testing.T
 	defer sqldb.Close()
 	db := DB{sqldb: sqldb}
 
-	regexStmt := `[UPDATE subprojects SET project_id = \$1 WHERE id = \$2]`
+	regexStmt := `[UPDATE obsidian.subprojects SET project_id = \$1 WHERE id = \$2]`
 	mock.ExpectPrepare(regexStmt)
-	stmt := "UPDATE subprojects"
+	stmt := "UPDATE obsidian.subprojects"
 	mock.ExpectExec(stmt).
 		WithArgs(413, 1).
 		WillReturnResult(sqlmock.NewResult(0, 0))
@@ -500,9 +500,9 @@ func TestShouldDeleteSubproject(t *testing.T) {
 	defer sqldb.Close()
 	db := DB{sqldb: sqldb}
 
-	regexStmt := `[DELETE FROM subprojects WHERE id = \$1]`
+	regexStmt := `[DELETE FROM obsidian.subprojects WHERE id = \$1]`
 	mock.ExpectPrepare(regexStmt)
-	stmt := "DELETE FROM subprojects"
+	stmt := "DELETE FROM obsidian.subprojects"
 	mock.ExpectExec(stmt).
 		WithArgs(1).
 		WillReturnResult(sqlmock.NewResult(0, 1))
@@ -529,9 +529,9 @@ func TestShouldFailDeleteSubprojectWithUnknownID(t *testing.T) {
 	defer sqldb.Close()
 	db := DB{sqldb: sqldb}
 
-	regexStmt := `[DELETE FROM subprojects WHERE id = \$1]`
+	regexStmt := `[DELETE FROM obsidian.subprojects WHERE id = \$1]`
 	mock.ExpectPrepare(regexStmt)
-	stmt := "DELETE FROM subprojects"
+	stmt := "DELETE FROM obsidian.subprojects"
 	mock.ExpectExec(stmt).
 		WithArgs(413).
 		WillReturnResult(sqlmock.NewResult(0, 0))

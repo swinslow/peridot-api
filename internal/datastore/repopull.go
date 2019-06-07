@@ -36,7 +36,7 @@ type RepoPull struct {
 // GetAllRepoPullsForRepoBranch returns a slice of all repo
 // pulls in the database for the given Repo ID and branch.
 func (db *DB) GetAllRepoPullsForRepoBranch(repoID uint32, branch string) ([]*RepoPull, error) {
-	rows, err := db.sqldb.Query("SELECT id, repo_id, branch, pulled_at, commit, tag, spdx_id FROM repo_pulls WHERE repo_id = $1 AND branch = $2 ORDER BY id", repoID, branch)
+	rows, err := db.sqldb.Query("SELECT id, repo_id, branch, pulled_at, commit, tag, spdx_id FROM obsidian.repo_pulls WHERE repo_id = $1 AND branch = $2 ORDER BY id", repoID, branch)
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +62,7 @@ func (db *DB) GetAllRepoPullsForRepoBranch(repoID uint32, branch string) ([]*Rep
 // or nil and an error if not found.
 func (db *DB) GetRepoPullByID(id uint32) (*RepoPull, error) {
 	var rp RepoPull
-	err := db.sqldb.QueryRow("SELECT id, repo_id, branch, pulled_at, commit, tag, spdx_id FROM repo_pulls WHERE id = $1", id).
+	err := db.sqldb.QueryRow("SELECT id, repo_id, branch, pulled_at, commit, tag, spdx_id FROM obsidian.repo_pulls WHERE id = $1", id).
 		Scan(&rp.ID, &rp.RepoID, &rp.Branch, &rp.PulledAt, &rp.Commit, &rp.Tag, &rp.SPDXID)
 	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("no repo pull found with ID %v", id)
@@ -80,7 +80,7 @@ func (db *DB) GetRepoPullByID(id uint32) (*RepoPull, error) {
 // error if failing.
 func (db *DB) AddRepoPull(repoID uint32, branch string, pulledAt time.Time, commit string, tag string, spdxID string) (uint32, error) {
 	// FIXME consider whether to move out into one-time-prepared statement
-	stmt, err := db.sqldb.Prepare("INSERT INTO repo_pulls(repo_id, branch, pulled_at, commit, tag, spdx_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id")
+	stmt, err := db.sqldb.Prepare("INSERT INTO obsidian.repo_pulls(repo_id, branch, pulled_at, commit, tag, spdx_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id")
 	if err != nil {
 		return 0, err
 	}
@@ -104,7 +104,7 @@ func (db *DB) DeleteRepoPull(id uint32) error {
 	// FIXME whether to set up sub-elements' schemas to delete on cascade
 
 	// FIXME consider whether to move out into one-time-prepared statement
-	stmt, err := db.sqldb.Prepare("DELETE FROM repo_pulls WHERE id = $1")
+	stmt, err := db.sqldb.Prepare("DELETE FROM obsidian.repo_pulls WHERE id = $1")
 	if err != nil {
 		return err
 	}

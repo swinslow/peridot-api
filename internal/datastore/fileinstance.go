@@ -28,7 +28,7 @@ type FileInstance struct {
 // or nil and an error if not found.
 func (db *DB) GetFileInstanceByID(id uint64) (*FileInstance, error) {
 	var fi FileInstance
-	err := db.sqldb.QueryRow("SELECT id, repopull_id, filehash_id, path FROM file_instances WHERE id = $1", id).
+	err := db.sqldb.QueryRow("SELECT id, repopull_id, filehash_id, path FROM obsidian.file_instances WHERE id = $1", id).
 		Scan(&fi.ID, &fi.RepoPullID, &fi.FileHashID, &fi.Path)
 	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("no file instance found with ID %v", id)
@@ -45,7 +45,7 @@ func (db *DB) GetFileInstanceByID(id uint64) (*FileInstance, error) {
 // and the corresponding FileHash ID. It returns the new
 // file instance's ID on success or an error if failing.
 func (db *DB) AddFileInstance(repoPullID uint32, fileHashID uint64, path string) (uint64, error) {
-	stmt, err := db.sqldb.Prepare("INSERT INTO file_instances(repopull_id, filehash_id, path) VALUES ($1, $2, $3) RETURNING id")
+	stmt, err := db.sqldb.Prepare("INSERT INTO obsidian.file_instances(repopull_id, filehash_id, path) VALUES ($1, $2, $3) RETURNING id")
 	if err != nil {
 		return 0, err
 	}
@@ -65,7 +65,7 @@ func (db *DB) DeleteFileInstance(id uint64) error {
 	var err error
 	var result sql.Result
 
-	stmt, err := db.sqldb.Prepare("DELETE FROM file_instances WHERE id = $1")
+	stmt, err := db.sqldb.Prepare("DELETE FROM obsidian.file_instances WHERE id = $1")
 	if err != nil {
 		return err
 	}

@@ -6,7 +6,7 @@ package datastore
 // already exist.
 func (db *DB) CreateTableUsers() error {
 	_, err := db.sqldb.Exec(`
-		CREATE TABLE IF NOT EXISTS users (
+		CREATE TABLE IF NOT EXISTS obsidian.users (
 			id INTEGER NOT NULL PRIMARY KEY,
 			email TEXT NOT NULL,
 			name TEXT NOT NULL,
@@ -20,7 +20,7 @@ func (db *DB) CreateTableUsers() error {
 // does not already exist.
 func (db *DB) CreateTableProjects() error {
 	_, err := db.sqldb.Exec(`
-		CREATE TABLE IF NOT EXISTS projects (
+		CREATE TABLE IF NOT EXISTS obsidian.projects (
 			id SERIAL PRIMARY KEY,
 			name TEXT NOT NULL,
 			fullname TEXT NOT NULL
@@ -33,12 +33,12 @@ func (db *DB) CreateTableProjects() error {
 // if it does not already exist.
 func (db *DB) CreateTableSubprojects() error {
 	_, err := db.sqldb.Exec(`
-		CREATE TABLE IF NOT EXISTS subprojects (
+		CREATE TABLE IF NOT EXISTS obsidian.subprojects (
 			id SERIAL PRIMARY KEY,
 			project_id INTEGER NOT NULL,
 			name TEXT NOT NULL,
 			fullname TEXT NOT NULL,
-			FOREIGN KEY (project_id) REFERENCES projects (id)
+			FOREIGN KEY (project_id) REFERENCES obsidian.projects (id)
 		)
 	`)
 	return err
@@ -48,12 +48,12 @@ func (db *DB) CreateTableSubprojects() error {
 // not already exist.
 func (db *DB) CreateTableRepos() error {
 	_, err := db.sqldb.Exec(`
-		CREATE TABLE IF NOT EXISTS repos (
+		CREATE TABLE IF NOT EXISTS obsidian.repos (
 			id SERIAL PRIMARY KEY,
 			subproject_id INTEGER NOT NULL,
 			name TEXT NOT NULL,
 			address TEXT NOT NULL,
-			FOREIGN KEY (subproject_id) REFERENCES subprojects (id)
+			FOREIGN KEY (subproject_id) REFERENCES obsidian.subprojects (id)
 		)
 	`)
 	return err
@@ -63,11 +63,11 @@ func (db *DB) CreateTableRepos() error {
 // if it does not already exist.
 func (db *DB) CreateTableRepoBranches() error {
 	_, err := db.sqldb.Exec(`
-		CREATE TABLE IF NOT EXISTS repo_branches (
+		CREATE TABLE IF NOT EXISTS obsidian.repo_branches (
 			repo_id INTEGER,
 			branch TEXT,
 			PRIMARY KEY (repo_id, branch),
-			FOREIGN KEY (repo_id) REFERENCES repos (id)
+			FOREIGN KEY (repo_id) REFERENCES obsidian.repos (id)
 		)
 	`)
 	return err
@@ -77,7 +77,7 @@ func (db *DB) CreateTableRepoBranches() error {
 // does not already exist.
 func (db *DB) CreateTableRepoPulls() error {
 	_, err := db.sqldb.Exec(`
-		CREATE TABLE IF NOT EXISTS repo_pulls (
+		CREATE TABLE IF NOT EXISTS obsidian.repo_pulls (
 			id SERIAL PRIMARY KEY,
 			repo_id INTEGER NOT NULL,
 			branch TEXT NOT NULL,
@@ -85,7 +85,7 @@ func (db *DB) CreateTableRepoPulls() error {
 			commit TEXT,
 			tag TEXT,
 			spdx_id TEXT,
-			FOREIGN KEY (repo_id, branch) REFERENCES repo_branches (repo_id, branch)
+			FOREIGN KEY (repo_id, branch) REFERENCES obsidian.repo_branches (repo_id, branch)
 		)
 	`)
 	return err
@@ -95,7 +95,7 @@ func (db *DB) CreateTableRepoPulls() error {
 // does not already exist.
 func (db *DB) CreateTableFileHashes() error {
 	_, err := db.sqldb.Exec(`
-		CREATE TABLE IF NOT EXISTS file_hashes (
+		CREATE TABLE IF NOT EXISTS obsidian.file_hashes (
 			id SERIAL PRIMARY KEY,
 			hash_s256 TEXT,
 			hash_s1 TEXT
@@ -108,13 +108,13 @@ func (db *DB) CreateTableFileHashes() error {
 // does not already exist.
 func (db *DB) CreateTableFileInstances() error {
 	_, err := db.sqldb.Exec(`
-		CREATE TABLE IF NOT EXISTS file_instances (
+		CREATE TABLE IF NOT EXISTS obsidian.file_instances (
 			id SERIAL PRIMARY KEY,
 			repopull_id INTEGER NOT NULL,
 			filehash_id INTEGER NOT NULL,
 			path TEXT NOT NULL,
-			FOREIGN KEY (repopull_id) REFERENCES repo_pulls (id),
-			FOREIGN KEY (filehash_id) REFERENCES file_hashes (id)
+			FOREIGN KEY (repopull_id) REFERENCES obsidian.repo_pulls (id),
+			FOREIGN KEY (filehash_id) REFERENCES obsidian.file_hashes (id)
 		)
 	`)
 	return err

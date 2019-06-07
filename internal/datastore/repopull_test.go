@@ -36,7 +36,7 @@ func TestShouldGetAllRepoPullsForOneRepoBranch(t *testing.T) {
 		AddRow(11, 3, "dev-1.1", t11, c11, "", spdxID11).
 		AddRow(15, 3, "dev-1.1", t15, c15, "v1.1-rc0", spdxID15).
 		AddRow(16, 3, "dev-1.1", t16, c16, "v1.1-rc1", spdxID16)
-	mock.ExpectQuery(`SELECT id, repo_id, branch, pulled_at, commit, tag, spdx_id FROM repo_pulls WHERE repo_id = \$1 AND branch = \$2 ORDER BY id`).
+	mock.ExpectQuery(`SELECT id, repo_id, branch, pulled_at, commit, tag, spdx_id FROM obsidian.repo_pulls WHERE repo_id = \$1 AND branch = \$2 ORDER BY id`).
 		WillReturnRows(sentRows)
 
 	// run the tested function
@@ -116,7 +116,7 @@ func TestShouldGetRepoPullByID(t *testing.T) {
 
 	sentRows := sqlmock.NewRows([]string{"id", "repo_id", "branch", "pulled_at", "commit", "tag", "spdx_id"}).
 		AddRow(15, 3, "dev-1.1", t15, c15, "v1.1-rc0", spdxID15)
-	mock.ExpectQuery(`[SELECT id, repo_id, branch, pulled_at, commit, tag, spdx_id FROM repo_pulls WHERE id = \$1]`).
+	mock.ExpectQuery(`[SELECT id, repo_id, branch, pulled_at, commit, tag, spdx_id FROM obsidian.repo_pulls WHERE id = \$1]`).
 		WithArgs(15).
 		WillReturnRows(sentRows)
 
@@ -165,7 +165,7 @@ func TestShouldFailGetRepoPullByIDForUnknownID(t *testing.T) {
 	defer sqldb.Close()
 	db := DB{sqldb: sqldb}
 
-	mock.ExpectQuery(`[SELECT id, repo_id, branch, pulled_at, commit, tag, spdx_id FROM repo_pulls WHERE id = \$1]`).
+	mock.ExpectQuery(`[SELECT id, repo_id, branch, pulled_at, commit, tag, spdx_id FROM obsidian.repo_pulls WHERE id = \$1]`).
 		WithArgs(413).
 		WillReturnRows(sqlmock.NewRows([]string{}))
 
@@ -198,9 +198,9 @@ func TestShouldAddRepoPull(t *testing.T) {
 	c15 := "4567890123456789012345678901234567890123"
 	spdxID15 := "SPDXRef-xyzzy-15"
 
-	regexStmt := `[INSERT INTO repo_pulls(repo_id, branch, pulled_at, commit, tag, spdx_id) VALUES (\$1, \$2, \$3, \$4, \$5, \$6) RETURNING id]`
+	regexStmt := `[INSERT INTO obsidian.repo_pulls(repo_id, branch, pulled_at, commit, tag, spdx_id) VALUES (\$1, \$2, \$3, \$4, \$5, \$6) RETURNING id]`
 	mock.ExpectPrepare(regexStmt)
-	stmt := "INSERT INTO repo_pulls"
+	stmt := "INSERT INTO obsidian.repo_pulls"
 	mock.ExpectQuery(stmt).
 		WithArgs(15, "master", t15, c15, "v1.15-rc0", spdxID15).
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(36))
@@ -236,12 +236,12 @@ func TestShouldFailAddRepoPullWithUnknownRepoBranch(t *testing.T) {
 	c0 := "4567890123456789012345678901234567890123"
 	spdxID0 := "SPDXRef-oops"
 
-	regexStmt := `[INSERT INTO repo_pulls(repo_id, branch, pulled_at, commit, tag, spdx_id) VALUES (\$1, \$2, \$3, \$4, \$5, \$6) RETURNING id]`
+	regexStmt := `[INSERT INTO obsidian.repo_pulls(repo_id, branch, pulled_at, commit, tag, spdx_id) VALUES (\$1, \$2, \$3, \$4, \$5, \$6) RETURNING id]`
 	mock.ExpectPrepare(regexStmt)
-	stmt := "INSERT INTO repo_pulls"
+	stmt := "INSERT INTO obsidian.repo_pulls"
 	mock.ExpectQuery(stmt).
 		WithArgs(413, "unknown-branch", t0, c0, "", spdxID0).
-		WillReturnError(fmt.Errorf("pq: insert or update on table \"repo_pulls\" violates foreign key constraint \"repo_pulls_repo_id_fkey\""))
+		WillReturnError(fmt.Errorf("pq: insert or update on table \"obsidian.repo_pulls\" violates foreign key constraint \"obsidian.repo_pulls_repo_id_fkey\""))
 
 	// run the tested function
 	_, err = db.AddRepoPull(413, "unknown-branch", t0, c0, "", spdxID0)
@@ -265,9 +265,9 @@ func TestShouldDeleteRepoPull(t *testing.T) {
 	defer sqldb.Close()
 	db := DB{sqldb: sqldb}
 
-	regexStmt := `[DELETE FROM repo_pulls WHERE id = \$1]`
+	regexStmt := `[DELETE FROM obsidian.repo_pulls WHERE id = \$1]`
 	mock.ExpectPrepare(regexStmt)
-	stmt := "DELETE FROM repo_pulls"
+	stmt := "DELETE FROM obsidian.repo_pulls"
 	mock.ExpectExec(stmt).
 		WithArgs(1).
 		WillReturnResult(sqlmock.NewResult(0, 1))
@@ -294,9 +294,9 @@ func TestShouldFailDeleteRepoPullWithUnknownID(t *testing.T) {
 	defer sqldb.Close()
 	db := DB{sqldb: sqldb}
 
-	regexStmt := `[DELETE FROM repo_pulls WHERE id = \$1]`
+	regexStmt := `[DELETE FROM obsidian.repo_pulls WHERE id = \$1]`
 	mock.ExpectPrepare(regexStmt)
-	stmt := "DELETE FROM repo_pulls"
+	stmt := "DELETE FROM obsidian.repo_pulls"
 	mock.ExpectExec(stmt).
 		WithArgs(413).
 		WillReturnResult(sqlmock.NewResult(0, 0))

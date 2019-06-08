@@ -80,3 +80,11 @@ func InitNewDB(db *DB) error {
 
 	return nil
 }
+
+// ClearDB drops the obsidian schema. It returns nil on success
+// or any error encountered. Use extreme caution when calling!
+func ClearDB(db *DB) error {
+	// create schema
+	_, err := db.sqldb.Exec(`DROP SCHEMA obsidian`)
+	return err
+}

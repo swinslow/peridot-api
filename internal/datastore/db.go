@@ -38,7 +38,7 @@ func InitNewDB(db *DB) error {
 		return err
 	}
 
-	err = db.CreateTableUsers()
+	err = db.CreateTableUsersAndAddInitialAdminUser()
 	if err != nil {
 		return err
 	}

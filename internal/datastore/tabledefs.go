@@ -2,9 +2,14 @@
 
 package datastore
 
-// CreateTableUsers creates the users table if it does not
-// already exist.
-func (db *DB) CreateTableUsers() error {
+import "os"
+
+// CreateTableUsersAndAddInitialAdminUser creates the users table
+// if it does not already exist. Also, if there are not yet any
+// users, AND the environment variable INITIALADMINEMAIL is set,
+// then it creates an initial admin user with ID 1 and the email
+// address specified in that variable.
+func (db *DB) CreateTableUsersAndAddInitialAdminUser() error {
 	_, err := db.sqldb.Exec(`
 		CREATE TABLE IF NOT EXISTS obsidian.users (
 			id INTEGER NOT NULL PRIMARY KEY,
@@ -13,6 +18,20 @@ func (db *DB) CreateTableUsers() error {
 			access_level INTEGER NOT NULL
 		)
 	`)
+	if err != nil {
+		return err
+	}
+
+	// if there are no users yet, and if INITIALADMINEMAIL env var
+	// is also set, we'll create an initial administrative user
+	// with ID 1
+	users, err := db.GetAllUsers()
+	if err == nil && len(users) == 0 {
+		INITIALADMINEMAIL := os.Getenv("INITIALADMINEMAIL")
+		if INITIALADMINEMAIL != "" {
+			err = db.AddUser(1, "Admin", INITIALADMINEMAIL, AccessAdmin)
+		}
+	}
 	return err
 }
 

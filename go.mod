@@ -6,6 +6,7 @@ go 1.12
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.3.3
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gorilla/handlers v1.4.0
 	github.com/gorilla/mux v1.7.2
 	github.com/k0kubun/colorstring v0.0.0-20150214042306-9440f1994b88 // indirect

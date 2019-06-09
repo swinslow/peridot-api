@@ -15,13 +15,13 @@ type Datastore interface {
 	// GetUserByID returns the User with the given user ID, or nil
 	// and an error if not found.
 	GetUserByID(id uint32) (*User, error)
-	// GetUserByEmail returns the User with the given email, or nil
-	// and an error if not found.
-	GetUserByEmail(email string) (*User, error)
-	// AddUser adds a new User with the given user ID, name, email,
-	// and access level. It returns nil on success or an error if
-	// failing.
-	AddUser(id uint32, name string, email string, accessLevel UserAccessLevel) error
+	// GetUserByGithub returns the User with the given Github user
+	// name, or nil and an error if not found.
+	GetUserByGithub(github string) (*User, error)
+	// AddUser adds a new User with the given user ID, name, github
+	// user name, and access level. It returns nil on success or an
+	// error if failing.
+	AddUser(id uint32, name string, github string, accessLevel UserAccessLevel) error
 
 	// ===== Projects =====
 	// GetAllProjects returns a slice of all projects in the database.

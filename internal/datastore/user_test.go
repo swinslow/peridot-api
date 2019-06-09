@@ -19,10 +19,10 @@ func TestShouldGetAllUsers(t *testing.T) {
 	defer sqldb.Close()
 	db := DB{sqldb: sqldb}
 
-	sentRows := sqlmock.NewRows([]string{"id", "email", "name", "access_level"}).
+	sentRows := sqlmock.NewRows([]string{"id", "github", "name", "access_level"}).
 		AddRow(410952, "johndoe@example.com", "John Doe", AccessCommenter).
 		AddRow(8103918, "janedoe@example.com", "Jane Doe", AccessAdmin)
-	mock.ExpectQuery("SELECT id, email, name, access_level FROM obsidian.users ORDER BY id").WillReturnRows(sentRows)
+	mock.ExpectQuery("SELECT id, github, name, access_level FROM obsidian.users ORDER BY id").WillReturnRows(sentRows)
 
 	// run the tested function
 	gotRows, err := db.GetAllUsers()
@@ -44,8 +44,8 @@ func TestShouldGetAllUsers(t *testing.T) {
 	if user0.ID != 410952 {
 		t.Errorf("expected %v, got %v", 410952, user0.ID)
 	}
-	if user0.Email != "johndoe@example.com" {
-		t.Errorf("expected %v, got %v", "johndoe@example.com", user0.Email)
+	if user0.Github != "johndoe@example.com" {
+		t.Errorf("expected %v, got %v", "johndoe@example.com", user0.Github)
 	}
 	if user0.Name != "John Doe" {
 		t.Errorf("expected %v, got %v", "John Doe", user0.Name)
@@ -65,9 +65,9 @@ func TestShouldGetUserByID(t *testing.T) {
 	defer sqldb.Close()
 	db := DB{sqldb: sqldb}
 
-	sentRows := sqlmock.NewRows([]string{"id", "email", "name", "access_level"}).
+	sentRows := sqlmock.NewRows([]string{"id", "github", "name", "access_level"}).
 		AddRow(8103918, "janedoe@example.com", "Jane Doe", AccessAdmin)
-	mock.ExpectQuery(`[SELECT id, email, name, access_level FROM obsidian.users WHERE id = \$1]`).
+	mock.ExpectQuery(`[SELECT id, github, name, access_level FROM obsidian.users WHERE id = \$1]`).
 		WithArgs(8103918).
 		WillReturnRows(sentRows)
 
@@ -87,8 +87,8 @@ func TestShouldGetUserByID(t *testing.T) {
 	if user.ID != 8103918 {
 		t.Errorf("expected %v, got %v", 8103918, user.ID)
 	}
-	if user.Email != "janedoe@example.com" {
-		t.Errorf("expected %v, got %v", "janedoe@example.com", user.Email)
+	if user.Github != "janedoe@example.com" {
+		t.Errorf("expected %v, got %v", "janedoe@example.com", user.Github)
 	}
 	if user.Name != "Jane Doe" {
 		t.Errorf("expected %v, got %v", "Jane Doe", user.Name)
@@ -108,9 +108,9 @@ func TestShouldFailToGetUserByIDIfInvalidAccessLevelInteger(t *testing.T) {
 	defer sqldb.Close()
 	db := DB{sqldb: sqldb}
 
-	sentRows := sqlmock.NewRows([]string{"id", "email", "name", "access_level"}).
+	sentRows := sqlmock.NewRows([]string{"id", "github", "name", "access_level"}).
 		AddRow(8103918, "janedoe@example.com", "Jane Doe", 6)
-	mock.ExpectQuery(`[SELECT id, email, name, access_level FROM obsidian.users WHERE id = \$1]`).
+	mock.ExpectQuery(`[SELECT id, github, name, access_level FROM obsidian.users WHERE id = \$1]`).
 		WithArgs(8103918).
 		WillReturnRows(sentRows)
 
@@ -131,7 +131,7 @@ func TestShouldFailToGetUserByIDIfInvalidAccessLevelInteger(t *testing.T) {
 	}
 }
 
-func TestShouldGetUserByEmail(t *testing.T) {
+func TestShouldGetUserByGithub(t *testing.T) {
 	// set up mock
 	sqldb, mock, err := sqlmock.New()
 	if err != nil {
@@ -140,14 +140,14 @@ func TestShouldGetUserByEmail(t *testing.T) {
 	defer sqldb.Close()
 	db := DB{sqldb: sqldb}
 
-	sentRows := sqlmock.NewRows([]string{"id", "email", "name", "access_level"}).
+	sentRows := sqlmock.NewRows([]string{"id", "github", "name", "access_level"}).
 		AddRow(8103918, "janedoe@example.com", "Jane Doe", AccessAdmin)
-	mock.ExpectQuery(`[SELECT id, email, name, access_level FROM obsidian.users WHERE email = \$1]`).
+	mock.ExpectQuery(`[SELECT id, github, name, access_level FROM obsidian.users WHERE github = \$1]`).
 		WithArgs("janedoe@example.com").
 		WillReturnRows(sentRows)
 
 	// run the tested function
-	user, err := db.GetUserByEmail("janedoe@example.com")
+	user, err := db.GetUserByGithub("janedoe@example.com")
 	if err != nil {
 		t.Fatalf("expected nil error, got %v", err)
 	}
@@ -162,8 +162,8 @@ func TestShouldGetUserByEmail(t *testing.T) {
 	if user.ID != 8103918 {
 		t.Errorf("expected %v, got %v", 8103918, user.ID)
 	}
-	if user.Email != "janedoe@example.com" {
-		t.Errorf("expected %v, got %v", "janedoe@example.com", user.Email)
+	if user.Github != "janedoe@example.com" {
+		t.Errorf("expected %v, got %v", "janedoe@example.com", user.Github)
 	}
 	if user.Name != "Jane Doe" {
 		t.Errorf("expected %v, got %v", "Jane Doe", user.Name)
@@ -174,7 +174,7 @@ func TestShouldGetUserByEmail(t *testing.T) {
 
 }
 
-func TestShouldFailToGetUserByEmailIfInvalidAccessLevelInteger(t *testing.T) {
+func TestShouldFailToGetUserByGithubIfInvalidAccessLevelInteger(t *testing.T) {
 	// set up mock
 	sqldb, mock, err := sqlmock.New()
 	if err != nil {
@@ -183,14 +183,14 @@ func TestShouldFailToGetUserByEmailIfInvalidAccessLevelInteger(t *testing.T) {
 	defer sqldb.Close()
 	db := DB{sqldb: sqldb}
 
-	sentRows := sqlmock.NewRows([]string{"id", "email", "name", "access_level"}).
+	sentRows := sqlmock.NewRows([]string{"id", "github", "name", "access_level"}).
 		AddRow(8103918, "janedoe@example.com", "Jane Doe", 6)
-	mock.ExpectQuery(`[SELECT id, email, name, access_level FROM obsidian.users WHERE email = \$1]`).
+	mock.ExpectQuery(`[SELECT id, github, name, access_level FROM obsidian.users WHERE github = \$1]`).
 		WithArgs("janedoe@example.com").
 		WillReturnRows(sentRows)
 
 	// run the tested function
-	user, err := db.GetUserByEmail("janedoe@example.com")
+	user, err := db.GetUserByGithub("janedoe@example.com")
 	// error should be set, and user should be nil, because access level 6 is invalid
 	if err == nil {
 		t.Fatalf("expected non-nil error, got nil")
@@ -215,7 +215,7 @@ func TestShouldAddUser(t *testing.T) {
 	defer sqldb.Close()
 	db := DB{sqldb: sqldb}
 
-	regexStmt := `[INSERT INTO obsidian.users(id, email, name, access_level) VALUES (\$1, \$2, \$3, \$4)]`
+	regexStmt := `[INSERT INTO obsidian.users(id, github, name, access_level) VALUES (\$1, \$2, \$3, \$4)]`
 	mock.ExpectPrepare(regexStmt)
 	stmt := "INSERT INTO obsidian.users"
 	mock.ExpectExec(stmt).
@@ -259,7 +259,7 @@ func TestShouldNotAddUserWithGreaterThanMaxID(t *testing.T) {
 func TestCanMarshalAdminUserToJSON(t *testing.T) {
 	user := &User{
 		ID:          85010942,
-		Email:       "janedoe@example.com",
+		Github:      "janedoe@example.com",
 		Name:        "Jane Doe",
 		AccessLevel: AccessAdmin,
 	}
@@ -283,8 +283,8 @@ func TestCanMarshalAdminUserToJSON(t *testing.T) {
 	if float64(user.ID) != mGot["id"].(float64) {
 		t.Errorf("expected %v, got %v", float64(user.ID), mGot["id"].(float64))
 	}
-	if user.Email != mGot["email"].(string) {
-		t.Errorf("expected %v, got %v", user.Email, mGot["email"].(string))
+	if user.Github != mGot["github"].(string) {
+		t.Errorf("expected %v, got %v", user.Github, mGot["github"].(string))
 	}
 	if user.Name != mGot["name"].(string) {
 		t.Errorf("expected %v, got %v", user.Name, mGot["name"].(string))
@@ -298,7 +298,7 @@ func TestCanMarshalAdminUserToJSON(t *testing.T) {
 func TestCanMarshalNonAdminUserToJSON(t *testing.T) {
 	user := &User{
 		ID:          16923941,
-		Email:       "johndoe@example.com",
+		Github:      "johndoe@example.com",
 		Name:        "John Doe",
 		AccessLevel: AccessCommenter,
 	}
@@ -322,8 +322,8 @@ func TestCanMarshalNonAdminUserToJSON(t *testing.T) {
 	if float64(user.ID) != mGot["id"].(float64) {
 		t.Errorf("expected %v, got %v", float64(user.ID), mGot["id"].(float64))
 	}
-	if user.Email != mGot["email"].(string) {
-		t.Errorf("expected %v, got %v", user.Email, mGot["email"].(string))
+	if user.Github != mGot["github"].(string) {
+		t.Errorf("expected %v, got %v", user.Github, mGot["github"].(string))
 	}
 	if user.Name != mGot["name"].(string) {
 		t.Errorf("expected %v, got %v", user.Name, mGot["name"].(string))
@@ -336,7 +336,7 @@ func TestCanMarshalNonAdminUserToJSON(t *testing.T) {
 
 func TestCanUnmarshalAdminUserFromJSON(t *testing.T) {
 	user := &User{}
-	js := []byte(`{"id":1920, "name":"Jane Doe", "email":"janedoe@example.com", "access":"admin"}`)
+	js := []byte(`{"id":1920, "name":"Jane Doe", "github":"janedoe@example.com", "access":"admin"}`)
 
 	err := json.Unmarshal(js, user)
 	if err != nil {
@@ -347,8 +347,8 @@ func TestCanUnmarshalAdminUserFromJSON(t *testing.T) {
 	if user.ID != 1920 {
 		t.Errorf("expected %v, got %v", 1920, user.ID)
 	}
-	if user.Email != "janedoe@example.com" {
-		t.Errorf("expected %v, got %v", "janedoe@example.com", user.Email)
+	if user.Github != "janedoe@example.com" {
+		t.Errorf("expected %v, got %v", "janedoe@example.com", user.Github)
 	}
 	if user.Name != "Jane Doe" {
 		t.Errorf("expected %v, got %v", "Jane Doe", user.Name)
@@ -360,7 +360,7 @@ func TestCanUnmarshalAdminUserFromJSON(t *testing.T) {
 
 func TestCanUnmarshalNonAdminUserFromJSON(t *testing.T) {
 	user := &User{}
-	js := []byte(`{"id":92841, "name":"John Doe", "email":"johndoe@example.com", "access":"commenter"}`)
+	js := []byte(`{"id":92841, "name":"John Doe", "github":"johndoe@example.com", "access":"commenter"}`)
 
 	err := json.Unmarshal(js, user)
 	if err != nil {
@@ -371,8 +371,8 @@ func TestCanUnmarshalNonAdminUserFromJSON(t *testing.T) {
 	if user.ID != 92841 {
 		t.Errorf("expected %v, got %v", 92841, user.ID)
 	}
-	if user.Email != "johndoe@example.com" {
-		t.Errorf("expected %v, got %v", "johndoe@example.com", user.Email)
+	if user.Github != "johndoe@example.com" {
+		t.Errorf("expected %v, got %v", "johndoe@example.com", user.Github)
 	}
 	if user.Name != "John Doe" {
 		t.Errorf("expected %v, got %v", "John Doe", user.Name)
@@ -384,7 +384,7 @@ func TestCanUnmarshalNonAdminUserFromJSON(t *testing.T) {
 
 func TestCannotUnmarshalUserWithNegativeIDFromJSON(t *testing.T) {
 	user := &User{}
-	js := []byte(`{"id":-92841, "name":"OOPS", "email":"oops@example.com", "access":"disabled"}`)
+	js := []byte(`{"id":-92841, "name":"OOPS", "github":"oops@example.com", "access":"disabled"}`)
 
 	err := json.Unmarshal(js, user)
 	if err == nil {

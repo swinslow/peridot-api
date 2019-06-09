@@ -25,16 +25,16 @@ func (mdb *mockDB) GetUserByID(id uint32) (*datastore.User, error) {
 	return nil, nil
 }
 
-// GetUserByEmail returns the User with the given email, or nil
-// and an error if not found.
-func (mdb *mockDB) GetUserByEmail(email string) (*datastore.User, error) {
+// GetUserByGithub returns the User with the given Github user
+// name, or nil and an error if not found.
+func (mdb *mockDB) GetUserByGithub(github string) (*datastore.User, error) {
 	return nil, nil
 }
 
-// AddUser adds a new User with the given user ID, name, email,
-// and access level. It returns nil on success or an error if
-// failing.
-func (mdb *mockDB) AddUser(id uint32, name string, email string, accessLevel datastore.UserAccessLevel) error {
+// AddUser adds a new User with the given user ID, name, github
+// user name, and access level. It returns nil on success or an
+// error if failing.
+func (mdb *mockDB) AddUser(id uint32, name string, github string, accessLevel datastore.UserAccessLevel) error {
 	return nil
 }
 

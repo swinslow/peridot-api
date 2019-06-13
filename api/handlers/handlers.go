@@ -11,4 +11,5 @@ import (
 func (env *Env) RegisterHandlers(router *mux.Router) {
 	router.HandleFunc("/hello", env.helloHandler).Methods("GET")
 	router.HandleFunc("/auth/login", env.authLoginHandler).Methods("GET")
+	router.HandleFunc("/auth/redirect", env.authGithubCallbackHandler).Methods("GET")
 }

@@ -16,6 +16,9 @@ services:
       - WEBPORT=3030
       - INITIALADMINGITHUB
       - JWTSECRETKEY
+      - GITHUBCLIENTID
+      - GITHUBCLIENTSECRET
+      - OAUTHSTATE
 
   db:
     image: postgres

@@ -9,7 +9,7 @@ import (
 	"golang.org/x/oauth2"
 	githuboauth "golang.org/x/oauth2/github"
 
-	"github.com/swinslow/obsidian-api/internal/datastore"
+	"github.com/swinslow/peridot-api/internal/datastore"
 )
 
 // Env is the environment for the web handlers.

@@ -1,5 +1,5 @@
 // Package handlerutils contains utility functions for testing the
-// obsidian API handlers.
+// peridot API handlers.
 // SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later
 package handlerutils
 

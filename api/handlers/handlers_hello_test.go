@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	hu "github.com/swinslow/obsidian-api/test/handlerutils"
+	hu "github.com/swinslow/peridot-api/test/handlerutils"
 )
 
 func TestCanGetHelloHandler(t *testing.T) {

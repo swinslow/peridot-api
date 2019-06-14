@@ -18,7 +18,7 @@ type User struct {
 
 // GetAllUsers returns a slice of all users in the database.
 func (db *DB) GetAllUsers() ([]*User, error) {
-	rows, err := db.sqldb.Query("SELECT id, github, name, access_level FROM obsidian.users ORDER BY id")
+	rows, err := db.sqldb.Query("SELECT id, github, name, access_level FROM peridot.users ORDER BY id")
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +45,7 @@ func (db *DB) GetAllUsers() ([]*User, error) {
 func (db *DB) GetUserByID(id uint32) (*User, error) {
 	var user User
 	var ualInt int
-	err := db.sqldb.QueryRow("SELECT id, github, name, access_level FROM obsidian.users WHERE id = $1", id).
+	err := db.sqldb.QueryRow("SELECT id, github, name, access_level FROM peridot.users WHERE id = $1", id).
 		Scan(&user.ID, &user.Github, &user.Name, &ualInt)
 	if err != nil {
 		return nil, err
@@ -66,7 +66,7 @@ func (db *DB) GetUserByID(id uint32) (*User, error) {
 func (db *DB) GetUserByGithub(github string) (*User, error) {
 	var user User
 	var ualInt int
-	err := db.sqldb.QueryRow("SELECT id, github, name, access_level FROM obsidian.users WHERE github = $1", github).
+	err := db.sqldb.QueryRow("SELECT id, github, name, access_level FROM peridot.users WHERE github = $1", github).
 		Scan(&user.ID, &user.Github, &user.Name, &ualInt)
 	if err != nil {
 		return nil, err
@@ -98,7 +98,7 @@ func (db *DB) AddUser(id uint32, name string, github string, accessLevel UserAcc
 	ualInt := IntFromUserAccessLevel(accessLevel)
 
 	// move out into one-time-prepared statement?
-	stmt, err := db.sqldb.Prepare("INSERT INTO obsidian.users(id, github, name, access_level) VALUES ($1, $2, $3, $4)")
+	stmt, err := db.sqldb.Prepare("INSERT INTO peridot.users(id, github, name, access_level) VALUES ($1, $2, $3, $4)")
 	if err != nil {
 		return err
 	}

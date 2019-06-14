@@ -7,7 +7,7 @@ import (
 	"fmt"
 )
 
-// Repo describes a repo within obsidian. A Repo is contained within
+// Repo describes a repo within peridot. A Repo is contained within
 // one Subproject, and a Repo contains one or more RepoBranches.
 type Repo struct {
 	// ID is the unique ID for this repo.
@@ -23,7 +23,7 @@ type Repo struct {
 
 // GetAllRepos returns a slice of all repos in the database.
 func (db *DB) GetAllRepos() ([]*Repo, error) {
-	rows, err := db.sqldb.Query("SELECT id, subproject_id, name, address FROM obsidian.repos ORDER BY id")
+	rows, err := db.sqldb.Query("SELECT id, subproject_id, name, address FROM peridot.repos ORDER BY id")
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +48,7 @@ func (db *DB) GetAllRepos() ([]*Repo, error) {
 // GetAllReposForSubprojectID returns a slice of all repos in
 // the database for the given subproject ID.
 func (db *DB) GetAllReposForSubprojectID(subprojectID uint32) ([]*Repo, error) {
-	rows, err := db.sqldb.Query("SELECT id, subproject_id, name, address FROM obsidian.repos WHERE subproject_id = $1 ORDER BY id", subprojectID)
+	rows, err := db.sqldb.Query("SELECT id, subproject_id, name, address FROM peridot.repos WHERE subproject_id = $1 ORDER BY id", subprojectID)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +74,7 @@ func (db *DB) GetAllReposForSubprojectID(subprojectID uint32) ([]*Repo, error) {
 // and an error if not found.
 func (db *DB) GetRepoByID(id uint32) (*Repo, error) {
 	var repo Repo
-	err := db.sqldb.QueryRow("SELECT id, subproject_id, name, address FROM obsidian.repos WHERE id = $1", id).
+	err := db.sqldb.QueryRow("SELECT id, subproject_id, name, address FROM peridot.repos WHERE id = $1", id).
 		Scan(&repo.ID, &repo.SubprojectID, &repo.Name, &repo.Address)
 	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("no repo found with ID %v", id)
@@ -91,7 +91,7 @@ func (db *DB) GetRepoByID(id uint32) (*Repo, error) {
 // repo's ID on success or an error if failing.
 func (db *DB) AddRepo(subprojectID uint32, name string, address string) (uint32, error) {
 	// FIXME consider whether to move out into one-time-prepared statement
-	stmt, err := db.sqldb.Prepare("INSERT INTO obsidian.repos(subproject_id, name, address) VALUES ($1, $2, $3) RETURNING id")
+	stmt, err := db.sqldb.Prepare("INSERT INTO peridot.repos(subproject_id, name, address) VALUES ($1, $2, $3) RETURNING id")
 	if err != nil {
 		return 0, err
 	}
@@ -114,21 +114,21 @@ func (db *DB) UpdateRepo(id uint32, newName string, newAddress string) error {
 
 	// FIXME consider whether to move out into one-time-prepared statements
 	if newName != "" && newAddress != "" {
-		stmt, err := db.sqldb.Prepare("UPDATE obsidian.repos SET name = $1, address = $2 WHERE id = $3")
+		stmt, err := db.sqldb.Prepare("UPDATE peridot.repos SET name = $1, address = $2 WHERE id = $3")
 		if err != nil {
 			return err
 		}
 		result, err = stmt.Exec(newName, newAddress, id)
 
 	} else if newName != "" {
-		stmt, err := db.sqldb.Prepare("UPDATE obsidian.repos SET name = $1 WHERE id = $2")
+		stmt, err := db.sqldb.Prepare("UPDATE peridot.repos SET name = $1 WHERE id = $2")
 		if err != nil {
 			return err
 		}
 		result, err = stmt.Exec(newName, id)
 
 	} else if newAddress != "" {
-		stmt, err := db.sqldb.Prepare("UPDATE obsidian.repos SET address = $1 WHERE id = $2")
+		stmt, err := db.sqldb.Prepare("UPDATE peridot.repos SET address = $1 WHERE id = $2")
 		if err != nil {
 			return err
 		}
@@ -163,7 +163,7 @@ func (db *DB) UpdateRepoSubprojectID(id uint32, newSubprojectID uint32) error {
 	var result sql.Result
 
 	// FIXME consider whether to move out into one-time-prepared statement
-	stmt, err := db.sqldb.Prepare("UPDATE obsidian.repos SET subproject_id = $1 WHERE id = $2")
+	stmt, err := db.sqldb.Prepare("UPDATE peridot.repos SET subproject_id = $1 WHERE id = $2")
 	if err != nil {
 		return err
 	}
@@ -196,7 +196,7 @@ func (db *DB) DeleteRepo(id uint32) error {
 	// FIXME whether to set up sub-elements' schemas to delete on cascade
 
 	// FIXME consider whether to move out into one-time-prepared statement
-	stmt, err := db.sqldb.Prepare("DELETE FROM obsidian.repos WHERE id = $1")
+	stmt, err := db.sqldb.Prepare("DELETE FROM peridot.repos WHERE id = $1")
 	if err != nil {
 		return err
 	}

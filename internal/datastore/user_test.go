@@ -22,7 +22,7 @@ func TestShouldGetAllUsers(t *testing.T) {
 	sentRows := sqlmock.NewRows([]string{"id", "github", "name", "access_level"}).
 		AddRow(410952, "johndoe@example.com", "John Doe", AccessCommenter).
 		AddRow(8103918, "janedoe@example.com", "Jane Doe", AccessAdmin)
-	mock.ExpectQuery("SELECT id, github, name, access_level FROM obsidian.users ORDER BY id").WillReturnRows(sentRows)
+	mock.ExpectQuery("SELECT id, github, name, access_level FROM peridot.users ORDER BY id").WillReturnRows(sentRows)
 
 	// run the tested function
 	gotRows, err := db.GetAllUsers()
@@ -67,7 +67,7 @@ func TestShouldGetUserByID(t *testing.T) {
 
 	sentRows := sqlmock.NewRows([]string{"id", "github", "name", "access_level"}).
 		AddRow(8103918, "janedoe@example.com", "Jane Doe", AccessAdmin)
-	mock.ExpectQuery(`[SELECT id, github, name, access_level FROM obsidian.users WHERE id = \$1]`).
+	mock.ExpectQuery(`[SELECT id, github, name, access_level FROM peridot.users WHERE id = \$1]`).
 		WithArgs(8103918).
 		WillReturnRows(sentRows)
 
@@ -110,7 +110,7 @@ func TestShouldFailToGetUserByIDIfInvalidAccessLevelInteger(t *testing.T) {
 
 	sentRows := sqlmock.NewRows([]string{"id", "github", "name", "access_level"}).
 		AddRow(8103918, "janedoe@example.com", "Jane Doe", 6)
-	mock.ExpectQuery(`[SELECT id, github, name, access_level FROM obsidian.users WHERE id = \$1]`).
+	mock.ExpectQuery(`[SELECT id, github, name, access_level FROM peridot.users WHERE id = \$1]`).
 		WithArgs(8103918).
 		WillReturnRows(sentRows)
 
@@ -142,7 +142,7 @@ func TestShouldGetUserByGithub(t *testing.T) {
 
 	sentRows := sqlmock.NewRows([]string{"id", "github", "name", "access_level"}).
 		AddRow(8103918, "janedoe@example.com", "Jane Doe", AccessAdmin)
-	mock.ExpectQuery(`[SELECT id, github, name, access_level FROM obsidian.users WHERE github = \$1]`).
+	mock.ExpectQuery(`[SELECT id, github, name, access_level FROM peridot.users WHERE github = \$1]`).
 		WithArgs("janedoe@example.com").
 		WillReturnRows(sentRows)
 
@@ -185,7 +185,7 @@ func TestShouldFailToGetUserByGithubIfInvalidAccessLevelInteger(t *testing.T) {
 
 	sentRows := sqlmock.NewRows([]string{"id", "github", "name", "access_level"}).
 		AddRow(8103918, "janedoe@example.com", "Jane Doe", 6)
-	mock.ExpectQuery(`[SELECT id, github, name, access_level FROM obsidian.users WHERE github = \$1]`).
+	mock.ExpectQuery(`[SELECT id, github, name, access_level FROM peridot.users WHERE github = \$1]`).
 		WithArgs("janedoe@example.com").
 		WillReturnRows(sentRows)
 
@@ -215,9 +215,9 @@ func TestShouldAddUser(t *testing.T) {
 	defer sqldb.Close()
 	db := DB{sqldb: sqldb}
 
-	regexStmt := `[INSERT INTO obsidian.users(id, github, name, access_level) VALUES (\$1, \$2, \$3, \$4)]`
+	regexStmt := `[INSERT INTO peridot.users(id, github, name, access_level) VALUES (\$1, \$2, \$3, \$4)]`
 	mock.ExpectPrepare(regexStmt)
-	stmt := "INSERT INTO obsidian.users"
+	stmt := "INSERT INTO peridot.users"
 	mock.ExpectExec(stmt).
 		WithArgs(192304, "johndoe@example.com", "John Doe", AccessCommenter).
 		WillReturnResult(sqlmock.NewResult(0, 1))

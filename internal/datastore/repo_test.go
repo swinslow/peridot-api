@@ -25,7 +25,7 @@ func TestShouldGetAllRepos(t *testing.T) {
 		AddRow(3, 3, "aai/aai-common", "https://gerrit.onap.org/r/aai/aai-common").
 		AddRow(4, 1, "kubernetes/minikube", "git@github.com:kubernetes/minikube.git").
 		AddRow(5, 3, "aai/esr-gui", "https://gerrit.onap.org/r/aai/esr-gui")
-	mock.ExpectQuery("SELECT id, subproject_id, name, address FROM obsidian.repos ORDER BY id").
+	mock.ExpectQuery("SELECT id, subproject_id, name, address FROM peridot.repos ORDER BY id").
 		WillReturnRows(sentRows)
 
 	// run the tested function
@@ -84,7 +84,7 @@ func TestShouldGetAllReposForOneSubproject(t *testing.T) {
 	sentRows := sqlmock.NewRows([]string{"id", "subproject_id", "name", "address"}).
 		AddRow(3, 3, "aai/aai-common", "https://gerrit.onap.org/r/aai/aai-common").
 		AddRow(5, 3, "aai/esr-gui", "https://gerrit.onap.org/r/aai/esr-gui")
-	mock.ExpectQuery(`SELECT id, subproject_id, name, address FROM obsidian.repos WHERE subproject_id = \$1 ORDER BY id`).
+	mock.ExpectQuery(`SELECT id, subproject_id, name, address FROM peridot.repos WHERE subproject_id = \$1 ORDER BY id`).
 		WillReturnRows(sentRows)
 
 	// run the tested function
@@ -129,7 +129,7 @@ func TestShouldGetRepoByID(t *testing.T) {
 
 	sentRows := sqlmock.NewRows([]string{"id", "subproject_id", "name", "address"}).
 		AddRow(3, 3, "aai/aai-common", "https://gerrit.onap.org/r/aai/aai-common")
-	mock.ExpectQuery(`[SELECT id, subproject_id, name, address FROM obsidian.repos WHERE id = \$1]`).
+	mock.ExpectQuery(`[SELECT id, subproject_id, name, address FROM peridot.repos WHERE id = \$1]`).
 		WithArgs(3).
 		WillReturnRows(sentRows)
 
@@ -169,7 +169,7 @@ func TestShouldFailGetRepoByIDForUnknownID(t *testing.T) {
 	defer sqldb.Close()
 	db := DB{sqldb: sqldb}
 
-	mock.ExpectQuery(`[SELECT id, subproject_id, name, address FROM obsidian.repos WHERE id = \$1]`).
+	mock.ExpectQuery(`[SELECT id, subproject_id, name, address FROM peridot.repos WHERE id = \$1]`).
 		WithArgs(413).
 		WillReturnRows(sqlmock.NewRows([]string{}))
 
@@ -198,9 +198,9 @@ func TestShouldAddRepo(t *testing.T) {
 	defer sqldb.Close()
 	db := DB{sqldb: sqldb}
 
-	regexStmt := `[INSERT INTO obsidian.repos(subproject_id, name, address) VALUES (\$1, \$2, \$3) RETURNING id]`
+	regexStmt := `[INSERT INTO peridot.repos(subproject_id, name, address) VALUES (\$1, \$2, \$3) RETURNING id]`
 	mock.ExpectPrepare(regexStmt)
-	stmt := "INSERT INTO obsidian.repos"
+	stmt := "INSERT INTO peridot.repos"
 	mock.ExpectQuery(stmt).
 		WithArgs(1, "kubernetes/kubernetes", "git@github.com:kubernetes/kubernetes.git").
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(6))
@@ -232,12 +232,12 @@ func TestShouldFailAddRepoWithUnknownSubprojectID(t *testing.T) {
 	defer sqldb.Close()
 	db := DB{sqldb: sqldb}
 
-	regexStmt := `[INSERT INTO obsidian.repos(project_id, name, fullname) VALUES (\$1, \$2, \$3) RETURNING id]`
+	regexStmt := `[INSERT INTO peridot.repos(project_id, name, fullname) VALUES (\$1, \$2, \$3) RETURNING id]`
 	mock.ExpectPrepare(regexStmt)
-	stmt := "INSERT INTO obsidian.repos"
+	stmt := "INSERT INTO peridot.repos"
 	mock.ExpectQuery(stmt).
 		WithArgs(17, "unknown-subproject", "https://example.com/some-repo.git").
-		WillReturnError(fmt.Errorf("pq: insert or update on table \"obsidian.repos\" violates foreign key constraint \"obsidian.repos_subproject_id_fkey\""))
+		WillReturnError(fmt.Errorf("pq: insert or update on table \"peridot.repos\" violates foreign key constraint \"peridot.repos_subproject_id_fkey\""))
 
 	// run the tested function
 	_, err = db.AddRepo(17, "unknown-subproject", "https://example.com/some-repo.git")
@@ -261,9 +261,9 @@ func TestShouldUpdateRepoNameAndAddress(t *testing.T) {
 	defer sqldb.Close()
 	db := DB{sqldb: sqldb}
 
-	regexStmt := `[UPDATE obsidian.repos SET name = \$1, address = \$2 WHERE id = \$3]`
+	regexStmt := `[UPDATE peridot.repos SET name = \$1, address = \$2 WHERE id = \$3]`
 	mock.ExpectPrepare(regexStmt)
-	stmt := "UPDATE obsidian.repos"
+	stmt := "UPDATE peridot.repos"
 	mock.ExpectExec(stmt).
 		WithArgs("myrepo", "https://example.com/some-repo.git", 1).
 		WillReturnResult(sqlmock.NewResult(0, 1))
@@ -290,9 +290,9 @@ func TestShouldUpdateRepoNameOnly(t *testing.T) {
 	defer sqldb.Close()
 	db := DB{sqldb: sqldb}
 
-	regexStmt := `[UPDATE obsidian.repos SET name = \$1 WHERE id = \$2]`
+	regexStmt := `[UPDATE peridot.repos SET name = \$1 WHERE id = \$2]`
 	mock.ExpectPrepare(regexStmt)
-	stmt := "UPDATE obsidian.repos"
+	stmt := "UPDATE peridot.repos"
 	mock.ExpectExec(stmt).
 		WithArgs("myrepo", 1).
 		WillReturnResult(sqlmock.NewResult(0, 1))
@@ -319,9 +319,9 @@ func TestShouldUpdateRepoAddressOnly(t *testing.T) {
 	defer sqldb.Close()
 	db := DB{sqldb: sqldb}
 
-	regexStmt := `[UPDATE obsidian.repos SET address = \$1 WHERE id = \$2]`
+	regexStmt := `[UPDATE peridot.repos SET address = \$1 WHERE id = \$2]`
 	mock.ExpectPrepare(regexStmt)
-	stmt := "UPDATE obsidian.repos"
+	stmt := "UPDATE peridot.repos"
 	mock.ExpectExec(stmt).
 		WithArgs("https://example.com/some-repo.git", 1).
 		WillReturnResult(sqlmock.NewResult(0, 1))
@@ -370,9 +370,9 @@ func TestShouldFailUpdateRepoWithUnknownID(t *testing.T) {
 	defer sqldb.Close()
 	db := DB{sqldb: sqldb}
 
-	regexStmt := `[UPDATE obsidian.repos SET name = \$1, address = \$2 WHERE id = \$3]`
+	regexStmt := `[UPDATE peridot.repos SET name = \$1, address = \$2 WHERE id = \$3]`
 	mock.ExpectPrepare(regexStmt)
-	stmt := "UPDATE obsidian.repos"
+	stmt := "UPDATE peridot.repos"
 	mock.ExpectExec(stmt).
 		WithArgs("oops", "https://example.com/some-repo.git", 413).
 		WillReturnResult(sqlmock.NewResult(0, 0))
@@ -399,9 +399,9 @@ func TestShouldUpdateRepoSubprojectID(t *testing.T) {
 	defer sqldb.Close()
 	db := DB{sqldb: sqldb}
 
-	regexStmt := `[UPDATE obsidian.repos SET subproject_id = \$1 WHERE id = \$2]`
+	regexStmt := `[UPDATE peridot.repos SET subproject_id = \$1 WHERE id = \$2]`
 	mock.ExpectPrepare(regexStmt)
-	stmt := "UPDATE obsidian.repos"
+	stmt := "UPDATE peridot.repos"
 	mock.ExpectExec(stmt).
 		WithArgs(3, 1).
 		WillReturnResult(sqlmock.NewResult(0, 1))
@@ -428,12 +428,12 @@ func TestShouldFailUpdateRepoSubprojectIDToUnknownSubprojectID(t *testing.T) {
 	defer sqldb.Close()
 	db := DB{sqldb: sqldb}
 
-	regexStmt := `[UPDATE obsidian.repos SET subproject_id = \$1 WHERE id = \$2]`
+	regexStmt := `[UPDATE peridot.repos SET subproject_id = \$1 WHERE id = \$2]`
 	mock.ExpectPrepare(regexStmt)
-	stmt := "UPDATE obsidian.repos"
+	stmt := "UPDATE peridot.repos"
 	mock.ExpectExec(stmt).
 		WithArgs(17, 1).
-		WillReturnError(fmt.Errorf("pq: insert or update on table \"obsidian.repos\" violates foreign key constraint \"obsidian.repos_subproject_id_fkey\""))
+		WillReturnError(fmt.Errorf("pq: insert or update on table \"peridot.repos\" violates foreign key constraint \"peridot.repos_subproject_id_fkey\""))
 
 	// run the tested function
 	err = db.UpdateRepoSubprojectID(1, 17)
@@ -457,9 +457,9 @@ func TestShouldFailUpdateRepoSubProjectIDWithUnknownRepoID(t *testing.T) {
 	defer sqldb.Close()
 	db := DB{sqldb: sqldb}
 
-	regexStmt := `[UPDATE obsidian.repos SET subproject_id = \$1 WHERE id = \$2]`
+	regexStmt := `[UPDATE peridot.repos SET subproject_id = \$1 WHERE id = \$2]`
 	mock.ExpectPrepare(regexStmt)
-	stmt := "UPDATE obsidian.repos"
+	stmt := "UPDATE peridot.repos"
 	mock.ExpectExec(stmt).
 		WithArgs(413, 1).
 		WillReturnResult(sqlmock.NewResult(0, 0))
@@ -486,9 +486,9 @@ func TestShouldDeleteRepo(t *testing.T) {
 	defer sqldb.Close()
 	db := DB{sqldb: sqldb}
 
-	regexStmt := `[DELETE FROM obsidian.repos WHERE id = \$1]`
+	regexStmt := `[DELETE FROM peridot.repos WHERE id = \$1]`
 	mock.ExpectPrepare(regexStmt)
-	stmt := "DELETE FROM obsidian.repos"
+	stmt := "DELETE FROM peridot.repos"
 	mock.ExpectExec(stmt).
 		WithArgs(1).
 		WillReturnResult(sqlmock.NewResult(0, 1))
@@ -515,9 +515,9 @@ func TestShouldFailDeleteRepoWithUnknownID(t *testing.T) {
 	defer sqldb.Close()
 	db := DB{sqldb: sqldb}
 
-	regexStmt := `[DELETE FROM obsidian.repos WHERE id = \$1]`
+	regexStmt := `[DELETE FROM peridot.repos WHERE id = \$1]`
 	mock.ExpectPrepare(regexStmt)
-	stmt := "DELETE FROM obsidian.repos"
+	stmt := "DELETE FROM peridot.repos"
 	mock.ExpectExec(stmt).
 		WithArgs(413).
 		WillReturnResult(sqlmock.NewResult(0, 0))

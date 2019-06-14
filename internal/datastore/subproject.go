@@ -7,7 +7,7 @@ import (
 	"fmt"
 )
 
-// Subproject describes a subproject within obsidian. A Subproject
+// Subproject describes a subproject within peridot. A Subproject
 // is contained within one Project, and a Subproject contains one
 // or more Repos.
 type Subproject struct {
@@ -24,7 +24,7 @@ type Subproject struct {
 
 // GetAllSubprojects returns a slice of all subprojects in the database.
 func (db *DB) GetAllSubprojects() ([]*Subproject, error) {
-	rows, err := db.sqldb.Query("SELECT id, project_id, name, fullname FROM obsidian.subprojects ORDER BY id")
+	rows, err := db.sqldb.Query("SELECT id, project_id, name, fullname FROM peridot.subprojects ORDER BY id")
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +49,7 @@ func (db *DB) GetAllSubprojects() ([]*Subproject, error) {
 // GetAllSubprojectsForProjectID returns a slice of all
 // subprojects in the database for the given project ID.
 func (db *DB) GetAllSubprojectsForProjectID(projectID uint32) ([]*Subproject, error) {
-	rows, err := db.sqldb.Query("SELECT id, project_id, name, fullname FROM obsidian.subprojects WHERE project_id = $1 ORDER BY id", projectID)
+	rows, err := db.sqldb.Query("SELECT id, project_id, name, fullname FROM peridot.subprojects WHERE project_id = $1 ORDER BY id", projectID)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +75,7 @@ func (db *DB) GetAllSubprojectsForProjectID(projectID uint32) ([]*Subproject, er
 // and an error if not found.
 func (db *DB) GetSubprojectByID(id uint32) (*Subproject, error) {
 	var sp Subproject
-	err := db.sqldb.QueryRow("SELECT id, project_id, name, fullname FROM obsidian.subprojects WHERE id = $1", id).
+	err := db.sqldb.QueryRow("SELECT id, project_id, name, fullname FROM peridot.subprojects WHERE id = $1", id).
 		Scan(&sp.ID, &sp.ProjectID, &sp.Name, &sp.Fullname)
 	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("no subproject found with ID %v", id)
@@ -92,7 +92,7 @@ func (db *DB) GetSubprojectByID(id uint32) (*Subproject, error) {
 // subproject's ID on success or an error if failing.
 func (db *DB) AddSubproject(projectID uint32, name string, fullname string) (uint32, error) {
 	// FIXME consider whether to move out into one-time-prepared statement
-	stmt, err := db.sqldb.Prepare("INSERT INTO obsidian.subprojects(project_id, name, fullname) VALUES ($1, $2, $3) RETURNING id")
+	stmt, err := db.sqldb.Prepare("INSERT INTO peridot.subprojects(project_id, name, fullname) VALUES ($1, $2, $3) RETURNING id")
 	if err != nil {
 		return 0, err
 	}
@@ -116,21 +116,21 @@ func (db *DB) UpdateSubproject(id uint32, newName string, newFullname string) er
 
 	// FIXME consider whether to move out into one-time-prepared statements
 	if newName != "" && newFullname != "" {
-		stmt, err := db.sqldb.Prepare("UPDATE obsidian.subprojects SET name = $1, fullname = $2 WHERE id = $3")
+		stmt, err := db.sqldb.Prepare("UPDATE peridot.subprojects SET name = $1, fullname = $2 WHERE id = $3")
 		if err != nil {
 			return err
 		}
 		result, err = stmt.Exec(newName, newFullname, id)
 
 	} else if newName != "" {
-		stmt, err := db.sqldb.Prepare("UPDATE obsidian.subprojects SET name = $1 WHERE id = $2")
+		stmt, err := db.sqldb.Prepare("UPDATE peridot.subprojects SET name = $1 WHERE id = $2")
 		if err != nil {
 			return err
 		}
 		result, err = stmt.Exec(newName, id)
 
 	} else if newFullname != "" {
-		stmt, err := db.sqldb.Prepare("UPDATE obsidian.subprojects SET fullname = $1 WHERE id = $2")
+		stmt, err := db.sqldb.Prepare("UPDATE peridot.subprojects SET fullname = $1 WHERE id = $2")
 		if err != nil {
 			return err
 		}
@@ -165,7 +165,7 @@ func (db *DB) UpdateSubprojectProjectID(id uint32, newProjectID uint32) error {
 	var result sql.Result
 
 	// FIXME consider whether to move out into one-time-prepared statement
-	stmt, err := db.sqldb.Prepare("UPDATE obsidian.subprojects SET project_id = $1 WHERE id = $2")
+	stmt, err := db.sqldb.Prepare("UPDATE peridot.subprojects SET project_id = $1 WHERE id = $2")
 	if err != nil {
 		return err
 	}
@@ -198,7 +198,7 @@ func (db *DB) DeleteSubproject(id uint32) error {
 	// FIXME whether to set up sub-elements' schemas to delete on cascade
 
 	// FIXME consider whether to move out into one-time-prepared statement
-	stmt, err := db.sqldb.Prepare("DELETE FROM obsidian.subprojects WHERE id = $1")
+	stmt, err := db.sqldb.Prepare("DELETE FROM peridot.subprojects WHERE id = $1")
 	if err != nil {
 		return err
 	}

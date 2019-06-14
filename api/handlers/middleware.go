@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/swinslow/obsidian-api/internal/auth"
-	"github.com/swinslow/obsidian-api/internal/datastore"
+	"github.com/swinslow/peridot-api/internal/auth"
+	"github.com/swinslow/peridot-api/internal/datastore"
 )
 
 const (
@@ -20,13 +20,13 @@ const (
 	// ErrAuthGithub signifies that a Bearer token was
 	// included with the request headers, but that the
 	// Github user named in the token is not registered
-	// with the obsidian database.
+	// with the peridot database.
 	ErrAuthGithub = "Github user is not registered"
 
 	// ErrAuthAccess signifies that a Bearer token was
 	// included with the request headers, and that it
 	// identifies a Github user registered with the
-	// obsidian database, but that user does not have
+	// peridot database, but that user does not have
 	// sufficient access rights for the requested action.
 	ErrAuthAccess = "Access denied"
 )

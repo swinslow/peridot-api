@@ -11,7 +11,7 @@ import (
 	gh "github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 
-	"github.com/swinslow/obsidian-api/api/handlers"
+	"github.com/swinslow/peridot-api/api/handlers"
 )
 
 func main() {

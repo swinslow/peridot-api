@@ -8,7 +8,7 @@ import (
 
 	"golang.org/x/oauth2"
 
-	"github.com/swinslow/obsidian-api/internal/auth"
+	"github.com/swinslow/peridot-api/internal/auth"
 )
 
 func (env *Env) authLoginHandler(w http.ResponseWriter, r *http.Request) {
@@ -27,7 +27,7 @@ func (env *Env) authLoginHandler(w http.ResponseWriter, r *http.Request) {
 // to save the JWT in the browser's local storage, and then
 // redirect back to the webapp root location. An API user
 // would need to obtain the JWT through the webapp and then
-// use it in other obsidian API calls as needed.
+// use it in other peridot API calls as needed.
 func (env *Env) authGithubCallbackHandler(w http.ResponseWriter, r *http.Request) {
 	ghUser, err := auth.ValidateGithub(r, env.oauthConf, env.oauthState)
 	if err != nil {

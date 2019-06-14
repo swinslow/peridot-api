@@ -29,11 +29,11 @@ func NewDB(srcName string) (*DB, error) {
 	return db, nil
 }
 
-// InitNewDB creates all the obsidian database tables. It returns
+// InitNewDB creates all the peridot database tables. It returns
 // nil on success or any error encountered.
 func InitNewDB(db *DB) error {
 	// create schema
-	_, err := db.sqldb.Exec(`CREATE SCHEMA IF NOT EXISTS obsidian`)
+	_, err := db.sqldb.Exec(`CREATE SCHEMA IF NOT EXISTS peridot`)
 	if err != nil {
 		return err
 	}
@@ -81,10 +81,10 @@ func InitNewDB(db *DB) error {
 	return nil
 }
 
-// ClearDB drops the obsidian schema. It returns nil on success
+// ClearDB drops the peridot schema. It returns nil on success
 // or any error encountered. Use extreme caution when calling!
 func ClearDB(db *DB) error {
 	// create schema
-	_, err := db.sqldb.Exec(`DROP SCHEMA obsidian`)
+	_, err := db.sqldb.Exec(`DROP SCHEMA peridot`)
 	return err
 }

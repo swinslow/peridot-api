@@ -8,7 +8,7 @@ import (
 )
 
 // SPDXElementType defines the different types of data to which
-// an SPDXElement in obsidian might refer.
+// an SPDXElement in peridot might refer.
 type SPDXElementType int
 
 const (
@@ -21,11 +21,11 @@ const (
 	SPDXElementTypeRepoPull SPDXElementType = 10
 
 	// SPDXElementTypeComponent refers to an SPDX Package,
-	// representing a Component registered in obsidian.
+	// representing a Component registered in peridot.
 	SPDXElementTypeComponent SPDXElementType = 20
 
 	// SPDXElementTypeFile refers to an SPDX File,
-	// representing a FileInstance registered in obsidian
+	// representing a FileInstance registered in peridot
 	// (and typically contained within the corresponding
 	// RepoPull).
 	SPDXElementTypeFile SPDXElementType = 30

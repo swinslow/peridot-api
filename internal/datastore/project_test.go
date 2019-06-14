@@ -22,7 +22,7 @@ func TestShouldGetAllProjects(t *testing.T) {
 		AddRow(1, "cncf", "Cloud Native Computing Foundation (CNCF)").
 		AddRow(2, "onap", "Open Network Automation Platform (ONAP)").
 		AddRow(3, "hyperledger", "Hyperledger")
-	mock.ExpectQuery("SELECT id, name, fullname FROM obsidian.projects ORDER BY id").WillReturnRows(sentRows)
+	mock.ExpectQuery("SELECT id, name, fullname FROM peridot.projects ORDER BY id").WillReturnRows(sentRows)
 
 	// run the tested function
 	gotRows, err := db.GetAllProjects()
@@ -83,7 +83,7 @@ func TestShouldGetProjectByID(t *testing.T) {
 
 	sentRows := sqlmock.NewRows([]string{"id", "name", "fullname"}).
 		AddRow(2, "onap", "Open Network Automation Platform (ONAP)")
-	mock.ExpectQuery(`[SELECT id, name, fullname FROM obsidian.projects WHERE id = \$1]`).
+	mock.ExpectQuery(`[SELECT id, name, fullname FROM peridot.projects WHERE id = \$1]`).
 		WithArgs(2).
 		WillReturnRows(sentRows)
 
@@ -120,7 +120,7 @@ func TestShouldFailGetProjectByIDForUnknownID(t *testing.T) {
 	defer sqldb.Close()
 	db := DB{sqldb: sqldb}
 
-	mock.ExpectQuery(`[SELECT id, name, fullname FROM obsidian.projects WHERE id = \$1]`).
+	mock.ExpectQuery(`[SELECT id, name, fullname FROM peridot.projects WHERE id = \$1]`).
 		WithArgs(413).
 		WillReturnRows(sqlmock.NewRows([]string{}))
 
@@ -149,9 +149,9 @@ func TestShouldAddProject(t *testing.T) {
 	defer sqldb.Close()
 	db := DB{sqldb: sqldb}
 
-	regexStmt := `[INSERT INTO obsidian.projects(name, fullname) VALUES (\$1, \$2) RETURNING id]`
+	regexStmt := `[INSERT INTO peridot.projects(name, fullname) VALUES (\$1, \$2) RETURNING id]`
 	mock.ExpectPrepare(regexStmt)
-	stmt := "INSERT INTO obsidian.projects"
+	stmt := "INSERT INTO peridot.projects"
 	mock.ExpectQuery(stmt).
 		WithArgs("cncf", "Cloud Native Computing Foundation (CNCF)").
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
@@ -183,9 +183,9 @@ func TestShouldUpdateProjectNameAndFullname(t *testing.T) {
 	defer sqldb.Close()
 	db := DB{sqldb: sqldb}
 
-	regexStmt := `[UPDATE obsidian.projects SET name = \$1, fullname = \$2 WHERE id = \$3]`
+	regexStmt := `[UPDATE peridot.projects SET name = \$1, fullname = \$2 WHERE id = \$3]`
 	mock.ExpectPrepare(regexStmt)
-	stmt := "UPDATE obsidian.projects"
+	stmt := "UPDATE peridot.projects"
 	mock.ExpectExec(stmt).
 		WithArgs("myprj", "My Project", 1).
 		WillReturnResult(sqlmock.NewResult(0, 1))
@@ -212,9 +212,9 @@ func TestShouldUpdateProjectNameOnly(t *testing.T) {
 	defer sqldb.Close()
 	db := DB{sqldb: sqldb}
 
-	regexStmt := `[UPDATE obsidian.projects SET name = \$1 WHERE id = \$2]`
+	regexStmt := `[UPDATE peridot.projects SET name = \$1 WHERE id = \$2]`
 	mock.ExpectPrepare(regexStmt)
-	stmt := "UPDATE obsidian.projects"
+	stmt := "UPDATE peridot.projects"
 	mock.ExpectExec(stmt).
 		WithArgs("myprj", 1).
 		WillReturnResult(sqlmock.NewResult(0, 1))
@@ -241,9 +241,9 @@ func TestShouldUpdateProjectFullnameOnly(t *testing.T) {
 	defer sqldb.Close()
 	db := DB{sqldb: sqldb}
 
-	regexStmt := `[UPDATE obsidian.projects SET fullname = \$1 WHERE id = \$2]`
+	regexStmt := `[UPDATE peridot.projects SET fullname = \$1 WHERE id = \$2]`
 	mock.ExpectPrepare(regexStmt)
-	stmt := "UPDATE obsidian.projects"
+	stmt := "UPDATE peridot.projects"
 	mock.ExpectExec(stmt).
 		WithArgs("My Project", 1).
 		WillReturnResult(sqlmock.NewResult(0, 1))
@@ -292,9 +292,9 @@ func TestShouldFailUpdateProjectWithUnknownID(t *testing.T) {
 	defer sqldb.Close()
 	db := DB{sqldb: sqldb}
 
-	regexStmt := `[UPDATE obsidian.projects SET name = \$1, fullname = \$2 WHERE id = \$3]`
+	regexStmt := `[UPDATE peridot.projects SET name = \$1, fullname = \$2 WHERE id = \$3]`
 	mock.ExpectPrepare(regexStmt)
-	stmt := "UPDATE obsidian.projects"
+	stmt := "UPDATE peridot.projects"
 	mock.ExpectExec(stmt).
 		WithArgs("oops", "wrong ID", 413).
 		WillReturnResult(sqlmock.NewResult(0, 0))
@@ -321,9 +321,9 @@ func TestShouldDeleteProject(t *testing.T) {
 	defer sqldb.Close()
 	db := DB{sqldb: sqldb}
 
-	regexStmt := `[DELETE FROM obsidian.projects WHERE id = \$1]`
+	regexStmt := `[DELETE FROM peridot.projects WHERE id = \$1]`
 	mock.ExpectPrepare(regexStmt)
-	stmt := "DELETE FROM obsidian.projects"
+	stmt := "DELETE FROM peridot.projects"
 	mock.ExpectExec(stmt).
 		WithArgs(1).
 		WillReturnResult(sqlmock.NewResult(0, 1))
@@ -350,9 +350,9 @@ func TestShouldFailDeleteProjectWithUnknownID(t *testing.T) {
 	defer sqldb.Close()
 	db := DB{sqldb: sqldb}
 
-	regexStmt := `[DELETE FROM obsidian.projects WHERE id = \$1]`
+	regexStmt := `[DELETE FROM peridot.projects WHERE id = \$1]`
 	mock.ExpectPrepare(regexStmt)
-	stmt := "DELETE FROM obsidian.projects"
+	stmt := "DELETE FROM peridot.projects"
 	mock.ExpectExec(stmt).
 		WithArgs(413).
 		WillReturnResult(sqlmock.NewResult(0, 0))

@@ -7,7 +7,7 @@ import (
 	"fmt"
 )
 
-// RepoBranch describes a branch of a repo within obsidian. A
+// RepoBranch describes a branch of a repo within peridot. A
 // RepoBranch is contained within one Repo, and a RepoBranch
 // contains one or more RepoPulls.
 type RepoBranch struct {
@@ -20,7 +20,7 @@ type RepoBranch struct {
 // GetAllRepoBranchesForRepoID returns a slice of all repo
 // branches in the database for the given Repo ID.
 func (db *DB) GetAllRepoBranchesForRepoID(repoID uint32) ([]*RepoBranch, error) {
-	rows, err := db.sqldb.Query("SELECT repo_id, branch FROM obsidian.repo_branches WHERE repo_id = $1 ORDER BY branch", repoID)
+	rows, err := db.sqldb.Query("SELECT repo_id, branch FROM peridot.repo_branches WHERE repo_id = $1 ORDER BY branch", repoID)
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +47,7 @@ func (db *DB) GetAllRepoBranchesForRepoID(repoID uint32) ([]*RepoBranch, error) 
 // success or an error if failing.
 func (db *DB) AddRepoBranch(repoID uint32, branch string) error {
 	// FIXME consider whether to move out into one-time-prepared statement
-	stmt, err := db.sqldb.Prepare("INSERT INTO obsidian.repo_branches(repo_id, branch) VALUES ($1, $2)")
+	stmt, err := db.sqldb.Prepare("INSERT INTO peridot.repo_branches(repo_id, branch) VALUES ($1, $2)")
 	if err != nil {
 		return err
 	}
@@ -81,7 +81,7 @@ func (db *DB) DeleteRepoBranch(repoID uint32, branch string) error {
 	// FIXME whether to set up sub-elements' schemas to delete on cascade
 
 	// FIXME consider whether to move out into one-time-prepared statement
-	stmt, err := db.sqldb.Prepare("DELETE FROM obsidian.repo_branches WHERE repo_id = $1 AND branch = $2")
+	stmt, err := db.sqldb.Prepare("DELETE FROM peridot.repo_branches WHERE repo_id = $1 AND branch = $2")
 	if err != nil {
 		return err
 	}

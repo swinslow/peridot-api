@@ -11,7 +11,7 @@ import "os"
 // user name specified in that variable.
 func (db *DB) CreateTableUsersAndAddInitialAdminUser() error {
 	_, err := db.sqldb.Exec(`
-		CREATE TABLE IF NOT EXISTS obsidian.users (
+		CREATE TABLE IF NOT EXISTS peridot.users (
 			id INTEGER NOT NULL PRIMARY KEY,
 			github TEXT NOT NULL,
 			name TEXT NOT NULL,
@@ -39,7 +39,7 @@ func (db *DB) CreateTableUsersAndAddInitialAdminUser() error {
 // does not already exist.
 func (db *DB) CreateTableProjects() error {
 	_, err := db.sqldb.Exec(`
-		CREATE TABLE IF NOT EXISTS obsidian.projects (
+		CREATE TABLE IF NOT EXISTS peridot.projects (
 			id SERIAL PRIMARY KEY,
 			name TEXT NOT NULL,
 			fullname TEXT NOT NULL
@@ -52,12 +52,12 @@ func (db *DB) CreateTableProjects() error {
 // if it does not already exist.
 func (db *DB) CreateTableSubprojects() error {
 	_, err := db.sqldb.Exec(`
-		CREATE TABLE IF NOT EXISTS obsidian.subprojects (
+		CREATE TABLE IF NOT EXISTS peridot.subprojects (
 			id SERIAL PRIMARY KEY,
 			project_id INTEGER NOT NULL,
 			name TEXT NOT NULL,
 			fullname TEXT NOT NULL,
-			FOREIGN KEY (project_id) REFERENCES obsidian.projects (id)
+			FOREIGN KEY (project_id) REFERENCES peridot.projects (id)
 		)
 	`)
 	return err
@@ -67,12 +67,12 @@ func (db *DB) CreateTableSubprojects() error {
 // not already exist.
 func (db *DB) CreateTableRepos() error {
 	_, err := db.sqldb.Exec(`
-		CREATE TABLE IF NOT EXISTS obsidian.repos (
+		CREATE TABLE IF NOT EXISTS peridot.repos (
 			id SERIAL PRIMARY KEY,
 			subproject_id INTEGER NOT NULL,
 			name TEXT NOT NULL,
 			address TEXT NOT NULL,
-			FOREIGN KEY (subproject_id) REFERENCES obsidian.subprojects (id)
+			FOREIGN KEY (subproject_id) REFERENCES peridot.subprojects (id)
 		)
 	`)
 	return err
@@ -82,11 +82,11 @@ func (db *DB) CreateTableRepos() error {
 // if it does not already exist.
 func (db *DB) CreateTableRepoBranches() error {
 	_, err := db.sqldb.Exec(`
-		CREATE TABLE IF NOT EXISTS obsidian.repo_branches (
+		CREATE TABLE IF NOT EXISTS peridot.repo_branches (
 			repo_id INTEGER,
 			branch TEXT,
 			PRIMARY KEY (repo_id, branch),
-			FOREIGN KEY (repo_id) REFERENCES obsidian.repos (id)
+			FOREIGN KEY (repo_id) REFERENCES peridot.repos (id)
 		)
 	`)
 	return err
@@ -96,7 +96,7 @@ func (db *DB) CreateTableRepoBranches() error {
 // does not already exist.
 func (db *DB) CreateTableRepoPulls() error {
 	_, err := db.sqldb.Exec(`
-		CREATE TABLE IF NOT EXISTS obsidian.repo_pulls (
+		CREATE TABLE IF NOT EXISTS peridot.repo_pulls (
 			id SERIAL PRIMARY KEY,
 			repo_id INTEGER NOT NULL,
 			branch TEXT NOT NULL,
@@ -104,7 +104,7 @@ func (db *DB) CreateTableRepoPulls() error {
 			commit TEXT,
 			tag TEXT,
 			spdx_id TEXT,
-			FOREIGN KEY (repo_id, branch) REFERENCES obsidian.repo_branches (repo_id, branch)
+			FOREIGN KEY (repo_id, branch) REFERENCES peridot.repo_branches (repo_id, branch)
 		)
 	`)
 	return err
@@ -114,7 +114,7 @@ func (db *DB) CreateTableRepoPulls() error {
 // does not already exist.
 func (db *DB) CreateTableFileHashes() error {
 	_, err := db.sqldb.Exec(`
-		CREATE TABLE IF NOT EXISTS obsidian.file_hashes (
+		CREATE TABLE IF NOT EXISTS peridot.file_hashes (
 			id SERIAL PRIMARY KEY,
 			hash_s256 TEXT,
 			hash_s1 TEXT
@@ -127,13 +127,13 @@ func (db *DB) CreateTableFileHashes() error {
 // does not already exist.
 func (db *DB) CreateTableFileInstances() error {
 	_, err := db.sqldb.Exec(`
-		CREATE TABLE IF NOT EXISTS obsidian.file_instances (
+		CREATE TABLE IF NOT EXISTS peridot.file_instances (
 			id SERIAL PRIMARY KEY,
 			repopull_id INTEGER NOT NULL,
 			filehash_id INTEGER NOT NULL,
 			path TEXT NOT NULL,
-			FOREIGN KEY (repopull_id) REFERENCES obsidian.repo_pulls (id),
-			FOREIGN KEY (filehash_id) REFERENCES obsidian.file_hashes (id)
+			FOREIGN KEY (repopull_id) REFERENCES peridot.repo_pulls (id),
+			FOREIGN KEY (filehash_id) REFERENCES peridot.file_hashes (id)
 		)
 	`)
 	return err

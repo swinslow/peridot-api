@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later
 
-module github.com/swinslow/obsidian-api
+module github.com/swinslow/peridot-api
 
 go 1.12
 

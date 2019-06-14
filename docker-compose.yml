@@ -5,9 +5,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: ["./utils/wait-for-it/wait-for-it.sh", "db:5432", "--", "/go/bin/obsidian-api"]
+    command: ["./utils/wait-for-it/wait-for-it.sh", "db:5432", "--", "/go/bin/peridot-api"]
     volumes:
-      - .:/obsidian-api
+      - .:/peridot-api
     depends_on:
       - db
     ports:

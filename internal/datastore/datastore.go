@@ -1,5 +1,5 @@
 // Package datastore defines the database and in-memory models for all
-// data in obsidian.
+// data in peridot.
 // SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later
 package datastore
 

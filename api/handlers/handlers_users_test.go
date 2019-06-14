@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"testing"
 
-	hu "github.com/swinslow/obsidian-api/test/handlerutils"
+	hu "github.com/swinslow/peridot-api/test/handlerutils"
 )
 
 func TestCanGetUsersHandlerAsAdmin(t *testing.T) {

@@ -8,7 +8,7 @@ import (
 )
 
 // FileHash describes a global object of a file that has
-// been seen by obsidian, and that is (or at some point
+// been seen by peridot, and that is (or at some point
 // has been) recorded on disk for analysis. Multiple
 // FileInstances, representing the same file across
 // multiple RepoPulls, will point to the same FileHash ID.
@@ -25,7 +25,7 @@ type FileHash struct {
 // or nil and an error if not found.
 func (db *DB) GetFileHashByID(id uint64) (*FileHash, error) {
 	var fh FileHash
-	err := db.sqldb.QueryRow("SELECT id, hash_s256, hash_s1 FROM obsidian.file_hashes WHERE id = $1", id).
+	err := db.sqldb.QueryRow("SELECT id, hash_s256, hash_s1 FROM peridot.file_hashes WHERE id = $1", id).
 		Scan(&fh.ID, &fh.HashSHA256, &fh.HashSHA1)
 	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("no file hash found with ID %v", id)
@@ -42,7 +42,7 @@ func (db *DB) GetFileHashByID(id uint64) (*FileHash, error) {
 // NOT CURRENTLY TESTED; NEED TO MODIFY FOR USING pq.Array
 /*
 func (db *DB) GetFileHashesByIDs(ids []uint64) ([]*FileHash, error) {
-	rows, err := db.sqldb.Query("SELECT id, hash_s256, hash_s1 FROM obsidian.file_hashes WHERE id IN ($1) ORDER BY id", ids)
+	rows, err := db.sqldb.Query("SELECT id, hash_s256, hash_s1 FROM peridot.file_hashes WHERE id IN ($1) ORDER BY id", ids)
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +70,7 @@ func (db *DB) GetFileHashesByIDs(ids []uint64) ([]*FileHash, error) {
 // requiring its SHA256 and SHA1 values. It returns the
 // new file hash's ID on success or an error if failing.
 func (db *DB) AddFileHash(sha256 string, sha1 string) (uint64, error) {
-	stmt, err := db.sqldb.Prepare("INSERT INTO obsidian.file_hashes(hash_s256, hash_s1) VALUES ($1, $2) RETURNING id")
+	stmt, err := db.sqldb.Prepare("INSERT INTO peridot.file_hashes(hash_s256, hash_s1) VALUES ($1, $2) RETURNING id")
 	if err != nil {
 		return 0, err
 	}
@@ -90,7 +90,7 @@ func (db *DB) DeleteFileHash(id uint64) error {
 	var err error
 	var result sql.Result
 
-	stmt, err := db.sqldb.Prepare("DELETE FROM obsidian.file_hashes WHERE id = $1")
+	stmt, err := db.sqldb.Prepare("DELETE FROM peridot.file_hashes WHERE id = $1")
 	if err != nil {
 		return err
 	}

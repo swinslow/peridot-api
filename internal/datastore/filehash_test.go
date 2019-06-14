@@ -23,7 +23,7 @@ func TestShouldGetFileHashByID(t *testing.T) {
 
 	sentRows := sqlmock.NewRows([]string{"id", "hash_s256", "hash_s1"}).
 		AddRow(3, s256id3, s1id3)
-	mock.ExpectQuery(`SELECT id, hash_s256, hash_s1 FROM obsidian.file_hashes WHERE id = \$1`).
+	mock.ExpectQuery(`SELECT id, hash_s256, hash_s1 FROM peridot.file_hashes WHERE id = \$1`).
 		WithArgs(3).
 		WillReturnRows(sentRows)
 
@@ -60,7 +60,7 @@ func TestShouldFailGetFileHashByIDForUnknownID(t *testing.T) {
 	defer sqldb.Close()
 	db := DB{sqldb: sqldb}
 
-	mock.ExpectQuery(`SELECT id, hash_s256, hash_s1 FROM obsidian.file_hashes WHERE id = \$1`).
+	mock.ExpectQuery(`SELECT id, hash_s256, hash_s1 FROM peridot.file_hashes WHERE id = \$1`).
 		WithArgs(413).
 		WillReturnRows(sqlmock.NewRows([]string{}))
 
@@ -103,7 +103,7 @@ func TestShouldGetMultipleFileHashesForSliceOfIDs(t *testing.T) {
 		AddRow(1, s256id1, s1id1).
 		AddRow(2, s256id2, s1id2).
 		AddRow(3, s256id3, s1id3)
-	mock.ExpectQuery(`SELECT id, hash_s256, hash_s1 FROM obsidian.file_hashes WHERE id IN (\$1) ORDER BY id`).
+	mock.ExpectQuery(`SELECT id, hash_s256, hash_s1 FROM peridot.file_hashes WHERE id IN (\$1) ORDER BY id`).
 		WithArgs([]uint64{1, 2, 3}).
 		WillReturnRows(sentRows)
 
@@ -145,7 +145,7 @@ func TestShouldGetNoFileHashesForSliceOfUnknownIDs(t *testing.T) {
 	db := DB{sqldb: sqldb}
 
 	sentRows := sqlmock.NewRows([]string{"id", "hash_s256", "hash_s1"})
-	mock.ExpectQuery(`SELECT id, hash_s256, hash_s1 FROM obsidian.file_hashes WHERE id IN (\$1) ORDER BY id`).
+	mock.ExpectQuery(`SELECT id, hash_s256, hash_s1 FROM peridot.file_hashes WHERE id IN (\$1) ORDER BY id`).
 		WithArgs([]uint64{413, 617}).
 		WillReturnRows(sentRows)
 
@@ -180,9 +180,9 @@ func TestShouldAddFileHash(t *testing.T) {
 	s256 := "32b91a0bee702768018a1cb0df2d144c6b2ce806e504067216f44ab0fb839051"
 	s1 := "065165f810135a27c39327ce66d4df870d868e52"
 
-	regexStmt := `[INSERT INTO obsidian.file_hashes(hash_s256, hash_s1) VALUES (\$1, \$2) RETURNING id]`
+	regexStmt := `[INSERT INTO peridot.file_hashes(hash_s256, hash_s1) VALUES (\$1, \$2) RETURNING id]`
 	mock.ExpectPrepare(regexStmt)
-	stmt := "INSERT INTO obsidian.file_hashes"
+	stmt := "INSERT INTO peridot.file_hashes"
 	mock.ExpectQuery(stmt).
 		WithArgs(s256, s1).
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(3615))
@@ -214,9 +214,9 @@ func TestShouldDeleteFileHash(t *testing.T) {
 	defer sqldb.Close()
 	db := DB{sqldb: sqldb}
 
-	regexStmt := `[DELETE FROM obsidian.file_hashes WHERE id = \$1]`
+	regexStmt := `[DELETE FROM peridot.file_hashes WHERE id = \$1]`
 	mock.ExpectPrepare(regexStmt)
-	stmt := "DELETE FROM obsidian.file_hashes"
+	stmt := "DELETE FROM peridot.file_hashes"
 	mock.ExpectExec(stmt).
 		WithArgs(2851).
 		WillReturnResult(sqlmock.NewResult(0, 1))
@@ -243,9 +243,9 @@ func TestShouldFailDeleteFileHashWithUnknownID(t *testing.T) {
 	defer sqldb.Close()
 	db := DB{sqldb: sqldb}
 
-	regexStmt := `[DELETE FROM obsidian.file_hashes WHERE id = \$1]`
+	regexStmt := `[DELETE FROM peridot.file_hashes WHERE id = \$1]`
 	mock.ExpectPrepare(regexStmt)
-	stmt := "DELETE FROM obsidian.file_hashes"
+	stmt := "DELETE FROM peridot.file_hashes"
 	mock.ExpectExec(stmt).
 		WithArgs(413).
 		WillReturnResult(sqlmock.NewResult(0, 0))

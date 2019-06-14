@@ -3,6 +3,7 @@
 package handlers
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/swinslow/obsidian-api/internal/datastore"
@@ -12,23 +13,48 @@ type mockDB struct {
 	mockUsers []*datastore.User
 }
 
+// createMockDB creates mock values for the handler tests to use.
+func createMockDB() *mockDB {
+	mdb := &mockDB{}
+
+	mdb.mockUsers = []*datastore.User{
+		&datastore.User{ID: 1, Name: "Admin", Github: "admin", AccessLevel: datastore.AccessAdmin},
+		&datastore.User{ID: 2, Name: "Operator", Github: "operator", AccessLevel: datastore.AccessOperator},
+		&datastore.User{ID: 3, Name: "Commenter", Github: "commenter", AccessLevel: datastore.AccessCommenter},
+		&datastore.User{ID: 4, Name: "Viewer", Github: "viewer", AccessLevel: datastore.AccessViewer},
+		&datastore.User{ID: 10, Name: "Disabled", Github: "disabled", AccessLevel: datastore.AccessDisabled},
+	}
+
+	return mdb
+}
+
 // ===== Users =====
 
 // GetAllUsers returns a slice of all users in the database.
 func (mdb *mockDB) GetAllUsers() ([]*datastore.User, error) {
-	return []*datastore.User{}, nil
+	return mdb.mockUsers, nil
 }
 
 // GetUserByID returns the User with the given user ID, or nil
 // and an error if not found.
 func (mdb *mockDB) GetUserByID(id uint32) (*datastore.User, error) {
-	return nil, nil
+	for _, user := range mdb.mockUsers {
+		if user.ID == id {
+			return user, nil
+		}
+	}
+	return nil, fmt.Errorf("User not found with ID %d", id)
 }
 
 // GetUserByGithub returns the User with the given Github user
 // name, or nil and an error if not found.
 func (mdb *mockDB) GetUserByGithub(github string) (*datastore.User, error) {
-	return nil, nil
+	for _, user := range mdb.mockUsers {
+		if user.Github == github {
+			return user, nil
+		}
+	}
+	return nil, fmt.Errorf("User not found with Github username %s", github)
 }
 
 // AddUser adds a new User with the given user ID, name, github

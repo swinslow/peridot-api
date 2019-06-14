@@ -49,3 +49,78 @@ func GetBody(t *testing.T, rec *httptest.ResponseRecorder) []byte {
 	}
 	return got
 }
+
+// CheckResponse is a simple wrapper around the GetBody and
+// CheckMatch functions. It assumes that a mismatch should
+// return a fatal error.
+func CheckResponse(t *testing.T, rec *httptest.ResponseRecorder, wanted string) {
+	got := GetBody(t, rec)
+	CheckMatch(t, wanted, got, true)
+}
+
+// ConfirmOKResponse confirms that the handler returned an
+// OK (200) response and that the header is set for JSON content.
+func ConfirmOKResponse(t *testing.T, rec *httptest.ResponseRecorder) {
+	// check that we got a 200 (OK)
+	if 200 != rec.Code {
+		t.Errorf("Expected %d, got %d", 200, rec.Code)
+	}
+
+	// check that content type was application/json
+	header := rec.Result().Header
+	if header.Get("Content-Type") != "application/json" {
+		t.Errorf("expected %v, got %v", "application/json", header.Get("Content-Type"))
+	}
+}
+
+// ConfirmInvalidAuth confirms that the handler returned an
+// Unauthorized (401) response and that the correct error
+// message appeared in the JSON content.
+func ConfirmInvalidAuth(t *testing.T, rec *httptest.ResponseRecorder, errMsg string) {
+	// check that we got a 401 (Unauthorized)
+	if 401 != rec.Code {
+		t.Errorf("Expected %d, got %d", 401, rec.Code)
+	}
+
+	// check that we got a WWW-Authenticate header
+	// (see https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401)
+	header := rec.Result().Header
+	wantHeader := "Bearer"
+	gotHeader := header.Get("WWW-Authenticate")
+	if gotHeader != wantHeader {
+		t.Errorf("expected %v, got %v", wantHeader, gotHeader)
+	}
+
+	// check that content type was application/json
+	if header.Get("Content-Type") != "application/json" {
+		t.Errorf("expected %v, got %v", "application/json", header.Get("Content-Type"))
+	}
+
+	// check that the right "error" JSON string was returned
+	wantString := `{"error": "` + errMsg + `"}`
+	if rec.Body.String() != wantString {
+		t.Fatalf("expected %s, got %s", wantString, rec.Body.String())
+	}
+}
+
+// ConfirmDisabledAuth confirms that the handler returned a
+// Forbidden (403) response and that the correct error
+// message appeared in the JSON content.
+func ConfirmDisabledAuth(t *testing.T, rec *httptest.ResponseRecorder) {
+	// check that we got a 403 (Forbidden)
+	if 403 != rec.Code {
+		t.Errorf("Expected %d, got %d", 403, rec.Code)
+	}
+
+	// check that content type was application/json
+	header := rec.Result().Header
+	if header.Get("Content-Type") != "application/json" {
+		t.Errorf("expected %v, got %v", "application/json", header.Get("Content-Type"))
+	}
+
+	// check that the right "error" JSON string was returned
+	wantString := `{"error": "Access denied"}`
+	if rec.Body.String() != wantString {
+		t.Fatalf("expected %s, got %s", wantString, rec.Body.String())
+	}
+}

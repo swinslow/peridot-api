@@ -64,30 +64,8 @@ func SetupEnv() (*Env, error) {
 	env := &Env{
 		db:           db,
 		jwtSecretKey: JWTSECRETKEY,
-		oauthConf: oauthConf,
-		oauthState: OAUTHSTATE,
+		oauthConf:    oauthConf,
+		oauthState:   OAUTHSTATE,
 	}
 	return env, nil
-}
-
-// getTestEnv creates the Env object used for the handlers
-// unit test suite. It is not exported and should NEVER be
-// called by production code.
-func getTestEnv() *Env {
-	db := &mockDB{}
-
-	oauthConf := &oauth2.Config{
-		ClientID:     "abcdef0123abcdef4567",
-		ClientSecret: "abcdef0123abcdef4567abcdef8901abcdef2345",
-		Scopes:       []string{"user:email"},
-		Endpoint:     githuboauth.Endpoint,
-	}
-
-	env := &Env{
-		db:           db,
-		jwtSecretKey: "keyForTesting",
-		oauthConf:    oauthConf,
-		oauthState:   "nonRandomStateString",
-	}
-	return env
 }

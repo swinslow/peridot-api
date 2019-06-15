@@ -4,9 +4,9 @@ package handlers
 
 import (
 	"context"
-	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"golang.org/x/oauth2"
@@ -37,7 +37,6 @@ func getTestEnv() *Env {
 	return env
 }
 
-
 // loginWithTestUser loads the mock user with the given
 // github name, adds it to the request context, and
 // returns the request object. If ghUsername is "invalid", it
@@ -67,9 +66,9 @@ func loginWithTestUser(t *testing.T, req *http.Request, env *Env, ghUsername str
 // logged-in user context. If ghUsername is "invalid", it
 // will be set with an invalid user ID (ID: 0, AccessLevel:
 // AccessDisabled).
-func setupTestEnv(t *testing.T, method string, endpoint string, body io.Reader, ghUsername string) (*httptest.ResponseRecorder, *http.Request, *Env) {
+func setupTestEnv(t *testing.T, method string, endpoint string, bodystr string, ghUsername string) (*httptest.ResponseRecorder, *http.Request, *Env) {
 	rec := httptest.NewRecorder()
-	req, err := http.NewRequest(method, endpoint, nil)
+	req, err := http.NewRequest(method, endpoint, strings.NewReader(bodystr))
 	if err != nil {
 		t.Fatalf("got non-nil error: %v", err)
 	}

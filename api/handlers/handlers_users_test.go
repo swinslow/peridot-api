@@ -10,7 +10,7 @@ import (
 )
 
 func TestCanGetUsersHandlerAsAdmin(t *testing.T) {
-	rec, req, env := setupTestEnv(t, "GET", "/users", nil, "admin")
+	rec, req, env := setupTestEnv(t, "GET", "/users", "", "admin")
 	http.HandlerFunc(env.usersHandler).ServeHTTP(rec, req)
 	hu.ConfirmOKResponse(t, rec)
 
@@ -20,7 +20,7 @@ func TestCanGetUsersHandlerAsAdmin(t *testing.T) {
 }
 
 func TestCanGetUsersHandlerAsOperator(t *testing.T) {
-	rec, req, env := setupTestEnv(t, "GET", "/users", nil, "operator")
+	rec, req, env := setupTestEnv(t, "GET", "/users", "", "operator")
 	http.HandlerFunc(env.usersHandler).ServeHTTP(rec, req)
 	hu.ConfirmOKResponse(t, rec)
 
@@ -30,7 +30,7 @@ func TestCanGetUsersHandlerAsOperator(t *testing.T) {
 }
 
 func TestCanGetUsersHandlerAsCommenter(t *testing.T) {
-	rec, req, env := setupTestEnv(t, "GET", "/users", nil, "commenter")
+	rec, req, env := setupTestEnv(t, "GET", "/users", "", "commenter")
 	http.HandlerFunc(env.usersHandler).ServeHTTP(rec, req)
 	hu.ConfirmOKResponse(t, rec)
 
@@ -40,7 +40,7 @@ func TestCanGetUsersHandlerAsCommenter(t *testing.T) {
 }
 
 func TestCanGetUsersHandlerAsViewer(t *testing.T) {
-	rec, req, env := setupTestEnv(t, "GET", "/users", nil, "viewer")
+	rec, req, env := setupTestEnv(t, "GET", "/users", "", "viewer")
 	http.HandlerFunc(env.usersHandler).ServeHTTP(rec, req)
 	hu.ConfirmOKResponse(t, rec)
 
@@ -50,13 +50,13 @@ func TestCanGetUsersHandlerAsViewer(t *testing.T) {
 }
 
 func TestCannotGetUsersHandlerAsDisabledUser(t *testing.T) {
-	rec, req, env := setupTestEnv(t, "GET", "/users", nil, "disabled")
+	rec, req, env := setupTestEnv(t, "GET", "/users", "", "disabled")
 	http.HandlerFunc(env.usersHandler).ServeHTTP(rec, req)
 	hu.ConfirmDisabledAuth(t, rec)
 }
 
 func TestCannotGetUsersHandlerAsInvalidUser(t *testing.T) {
-	rec, req, env := setupTestEnv(t, "GET", "/users", nil, "invalid")
+	rec, req, env := setupTestEnv(t, "GET", "/users", "", "invalid")
 	http.HandlerFunc(env.usersHandler).ServeHTTP(rec, req)
 	hu.ConfirmInvalidAuth(t, rec, ErrAuthGithub)
 }

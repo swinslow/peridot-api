@@ -85,6 +85,6 @@ func InitNewDB(db *DB) error {
 // or any error encountered. Use extreme caution when calling!
 func ClearDB(db *DB) error {
 	// create schema
-	_, err := db.sqldb.Exec(`DROP SCHEMA peridot`)
+	_, err := db.sqldb.Exec(`DROP SCHEMA peridot CASCADE`)
 	return err
 }

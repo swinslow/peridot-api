@@ -73,6 +73,19 @@ func (mdb *mockDB) GetUserByGithub(github string) (*datastore.User, error) {
 // user name, and access level. It returns nil on success or an
 // error if failing.
 func (mdb *mockDB) AddUser(id uint32, name string, github string, accessLevel datastore.UserAccessLevel) error {
+	for _, u := range mdb.mockUsers {
+		if u.ID == id {
+			return fmt.Errorf("User with ID %d already exists in database", id)
+		}
+	}
+	user := &datastore.User{
+		ID:          id,
+		Name:        name,
+		Github:      github,
+		AccessLevel: accessLevel,
+	}
+
+	mdb.mockUsers = append(mdb.mockUsers, user)
 	return nil
 }
 

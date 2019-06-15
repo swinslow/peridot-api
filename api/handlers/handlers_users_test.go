@@ -6,8 +6,11 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/swinslow/peridot-api/internal/datastore"
 	hu "github.com/swinslow/peridot-api/test/handlerutils"
 )
+
+// ===== GET /users =====
 
 func TestCanGetUsersHandlerAsAdmin(t *testing.T) {
 	rec, req, env := setupTestEnv(t, "GET", "/users", "", "admin")
@@ -42,14 +45,57 @@ func TestCanGetUsersHandlerAsOtherUsers(t *testing.T) {
 	hu.CheckResponse(t, rec, wanted)
 }
 
-func TestCannotGetUsersHandlerAsDisabledUser(t *testing.T) {
+func TestCannotGetUsersHandlerAsBadUser(t *testing.T) {
 	rec, req, env := setupTestEnv(t, "GET", "/users", "", "disabled")
 	http.HandlerFunc(env.usersHandler).ServeHTTP(rec, req)
 	hu.ConfirmAccessDenied(t, rec)
-}
 
-func TestCannotGetUsersHandlerAsInvalidUser(t *testing.T) {
-	rec, req, env := setupTestEnv(t, "GET", "/users", "", "invalid")
+	rec, req, env = setupTestEnv(t, "GET", "/users", "", "invalid")
 	http.HandlerFunc(env.usersHandler).ServeHTTP(rec, req)
 	hu.ConfirmInvalidAuth(t, rec, ErrAuthGithub)
+}
+
+// ===== POST /users =====
+
+func TestCanPostUsersHandlerAsAdmin(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "POST", "/users", `{"name": "Steve", "github": "swinslow", "access": "operator"}`, "admin")
+	http.HandlerFunc(env.usersHandler).ServeHTTP(rec, req)
+	hu.ConfirmOKResponse(t, rec)
+
+	wanted := `{"success": true, "id": 11}`
+	hu.CheckResponse(t, rec, wanted)
+
+	// and verify state of database now
+	users, err := env.db.GetAllUsers()
+	if err != nil {
+		t.Errorf("expected nil error, got %v", err)
+	}
+	if len(users) != 6 {
+		t.Errorf("expected %d, got %d", 6, len(users))
+	}
+	newUser, err := env.db.GetUserByID(11)
+	if err != nil {
+		t.Fatalf("expected nil error, got %v", err)
+	}
+	wantedUser := &datastore.User{ID: 11, Name: "Steve", Github: "swinslow", AccessLevel: datastore.AccessOperator}
+	if newUser.ID != wantedUser.ID || newUser.Name != wantedUser.Name || newUser.Github != wantedUser.Github || newUser.AccessLevel != wantedUser.AccessLevel {
+		t.Errorf("expected %#v, got %#v", wantedUser, newUser)
+	}
+}
+
+func TestCannotPostUsersHandlerAsOtherUser(t *testing.T) {
+	// as operator
+	rec, req, env := setupTestEnv(t, "POST", "/users", `{"name": "Steve", "github": "swinslow", "access": "operator"}`, "operator")
+	http.HandlerFunc(env.usersHandler).ServeHTTP(rec, req)
+	hu.ConfirmAccessDenied(t, rec)
+
+	// as commenter
+	rec, req, env = setupTestEnv(t, "POST", "/users", `{"name": "Steve", "github": "swinslow", "access": "commenter"}`, "operator")
+	http.HandlerFunc(env.usersHandler).ServeHTTP(rec, req)
+	hu.ConfirmAccessDenied(t, rec)
+
+	// as viewer
+	rec, req, env = setupTestEnv(t, "POST", "/users", `{"name": "Steve", "github": "swinslow", "access": "viewer"}`, "operator")
+	http.HandlerFunc(env.usersHandler).ServeHTTP(rec, req)
+	hu.ConfirmAccessDenied(t, rec)
 }

@@ -21,12 +21,19 @@ func (env *Env) usersHandler(w http.ResponseWriter, r *http.Request) {
 	// responses will be JSON format
 	w.Header().Set("Content-Type", "application/json")
 
-	// we only take GET requests
-	if r.Method != "GET" {
-		http.Error(w, http.StatusText(405), 405)
-		return
+	// we only take GET or POST requests
+	switch r.Method {
+	case "GET":
+		env.usersGetHelper(w, r)
+	case "POST":
+		env.usersPostHelper(w, r)
+	default:
+		w.Header().Set("Allow", "GET, POST")
+		w.WriteHeader(http.StatusMethodNotAllowed)
 	}
+}
 
+func (env *Env) usersGetHelper(w http.ResponseWriter, r *http.Request) {
 	// get user and check access level
 	user := extractUser(w, r, datastore.AccessViewer)
 	if user == nil {
@@ -75,4 +82,78 @@ func (env *Env) usersHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Write(js)
+}
+
+func (env *Env) usersPostHelper(w http.ResponseWriter, r *http.Request) {
+	// get user and check access level
+	user := extractUser(w, r, datastore.AccessAdmin)
+	if user == nil {
+		return
+	}
+
+	// sufficient access; parse JSON request
+	js := map[string]string{}
+	err := json.NewDecoder(r.Body).Decode(&js)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(w, `{"success": false, "error": "Invalid JSON request"}`)
+		return
+	}
+
+	// and extract data
+	name, ok := js["name"]
+	if !ok {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(w, `{"success": false, "error": "Missing required value for 'name'"}`)
+		return
+	}
+	ghUsername, ok := js["github"]
+	if !ok {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(w, `{"success": false, "error": "Missing required value for 'github'"}`)
+		return
+	}
+	access, ok := js["access"]
+	if !ok {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(w, `{"success": false, "error": "Missing required value for 'access'"}`)
+		return
+	}
+
+	// check that access value is valid
+	ual, err := datastore.UserAccessLevelFromString(access)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(w, `{"success": false, "error": "Invalid value for 'access'"}`)
+		return
+	}
+
+	// FIXME: we should be able to add a user without specifying
+	// an ID. Since db.AddUser currently requires an ID, we'll
+	// manually check the maximum existing user ID, and choose
+	// the next highest.
+	users, err := env.db.GetAllUsers()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintf(w, `{"success": false, "error": "Error in user database"}`)
+		return
+	}
+	var maxCurrentUserID uint32
+	for _, u := range users {
+		if u.ID > maxCurrentUserID {
+			maxCurrentUserID = u.ID
+		}
+	}
+	newID := maxCurrentUserID + 1
+
+	// add the new user
+	err = env.db.AddUser(newID, name, ghUsername, ual)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintf(w, `{"success": false, "error": "Unable to create user"}`)
+		return
+	}
+
+	// success!
+	fmt.Fprintf(w, `{"success": true, "id": %d}`, newID)
 }

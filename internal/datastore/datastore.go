@@ -9,6 +9,12 @@ import "time"
 // for database tables, using either a backing database (production)
 // or mocks (test).
 type Datastore interface {
+	// ===== Administrative actions =====
+	// ResetDB drops the current schema and initializes a new one.
+	// NOTE that if the initial Github user is not defined in an
+	// environment variable, the new DB will not have an admin user!
+	ResetDB() error
+
 	// ===== Users =====
 	// GetAllUsers returns a slice of all users in the database.
 	GetAllUsers() ([]*User, error)

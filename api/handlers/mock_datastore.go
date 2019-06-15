@@ -28,6 +28,18 @@ func createMockDB() *mockDB {
 	return mdb
 }
 
+// ===== Administrative actions =====
+// ResetDB drops the current schema and initializes a new one.
+// NOTE that if the initial Github user is not defined in an
+// environment variable, the new DB will not have an admin user!
+func (mdb *mockDB) ResetDB() error {
+	// reset to just admin user
+	mdb.mockUsers = []*datastore.User{
+		&datastore.User{ID: 1, Name: "Admin", Github: "admin", AccessLevel: datastore.AccessAdmin},
+	}
+	return nil
+}
+
 // ===== Users =====
 
 // GetAllUsers returns a slice of all users in the database.

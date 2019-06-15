@@ -73,6 +73,21 @@ func ConfirmOKResponse(t *testing.T, rec *httptest.ResponseRecorder) {
 	}
 }
 
+// ConfirmBadRequestResponse confirms that the handler returned a
+// Bad Request (400) response and that the header is set for JSON content.
+func ConfirmBadRequestResponse(t *testing.T, rec *httptest.ResponseRecorder) {
+	// check that we got a 400 (Bad Request)
+	if 400 != rec.Code {
+		t.Errorf("Expected %d, got %d", 400, rec.Code)
+	}
+
+	// check that content type was application/json
+	header := rec.Result().Header
+	if header.Get("Content-Type") != "application/json" {
+		t.Errorf("expected %v, got %v", "application/json", header.Get("Content-Type"))
+	}
+}
+
 // ConfirmInvalidAuth confirms that the handler returned an
 // Unauthorized (401) response and that the correct error
 // message appeared in the JSON content.
@@ -103,10 +118,10 @@ func ConfirmInvalidAuth(t *testing.T, rec *httptest.ResponseRecorder, errMsg str
 	}
 }
 
-// ConfirmDisabledAuth confirms that the handler returned a
+// ConfirmAccessDenied confirms that the handler returned a
 // Forbidden (403) response and that the correct error
 // message appeared in the JSON content.
-func ConfirmDisabledAuth(t *testing.T, rec *httptest.ResponseRecorder) {
+func ConfirmAccessDenied(t *testing.T, rec *httptest.ResponseRecorder) {
 	// check that we got a 403 (Forbidden)
 	if 403 != rec.Code {
 		t.Errorf("Expected %d, got %d", 403, rec.Code)

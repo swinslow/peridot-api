@@ -12,6 +12,9 @@ func (env *Env) RegisterHandlers(router *mux.Router) {
 	// /hello -- ping and hello
 	router.HandleFunc("/hello", env.helloHandler).Methods("GET")
 
+	// /admin -- administrative actions
+	router.HandleFunc("/admin/db", env.adminDBHandler).Methods("POST")
+
 	// /auth -- authentication / OAuth flow
 	router.HandleFunc("/auth/login", env.authLoginHandler).Methods("GET")
 	router.HandleFunc("/auth/redirect", env.authGithubCallbackHandler).Methods("GET")

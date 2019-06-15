@@ -19,40 +19,33 @@ func TestCanGetUsersHandlerAsAdmin(t *testing.T) {
 	hu.CheckResponse(t, rec, wanted)
 }
 
-func TestCanGetUsersHandlerAsOperator(t *testing.T) {
+func TestCanGetUsersHandlerAsOtherUsers(t *testing.T) {
+	// should be same return for all
+	wanted := `{"users": [{"id": 1, "github": "admin"}, {"id": 2, "github": "operator"}, {"id": 3, "github": "commenter"}, {"id": 4, "github": "viewer"}, {"id": 10, "github": "disabled"}]}`
+
+	// as operator
 	rec, req, env := setupTestEnv(t, "GET", "/users", "", "operator")
 	http.HandlerFunc(env.usersHandler).ServeHTTP(rec, req)
 	hu.ConfirmOKResponse(t, rec)
-
-	// expect less data available here since user is just an operator, not admin
-	wanted := `{"users": [{"id": 1, "github": "admin"}, {"id": 2, "github": "operator"}, {"id": 3, "github": "commenter"}, {"id": 4, "github": "viewer"}, {"id": 10, "github": "disabled"}]}`
 	hu.CheckResponse(t, rec, wanted)
-}
 
-func TestCanGetUsersHandlerAsCommenter(t *testing.T) {
-	rec, req, env := setupTestEnv(t, "GET", "/users", "", "commenter")
+	// as commenter
+	rec, req, env = setupTestEnv(t, "GET", "/users", "", "commenter")
 	http.HandlerFunc(env.usersHandler).ServeHTTP(rec, req)
 	hu.ConfirmOKResponse(t, rec)
-
-	// expect less data available here since user is just an operator, not admin
-	wanted := `{"users": [{"id": 1, "github": "admin"}, {"id": 2, "github": "operator"}, {"id": 3, "github": "commenter"}, {"id": 4, "github": "viewer"}, {"id": 10, "github": "disabled"}]}`
 	hu.CheckResponse(t, rec, wanted)
-}
 
-func TestCanGetUsersHandlerAsViewer(t *testing.T) {
-	rec, req, env := setupTestEnv(t, "GET", "/users", "", "viewer")
+	// as viewer
+	rec, req, env = setupTestEnv(t, "GET", "/users", "", "viewer")
 	http.HandlerFunc(env.usersHandler).ServeHTTP(rec, req)
 	hu.ConfirmOKResponse(t, rec)
-
-	// expect less data available here since user is just an operator, not admin
-	wanted := `{"users": [{"id": 1, "github": "admin"}, {"id": 2, "github": "operator"}, {"id": 3, "github": "commenter"}, {"id": 4, "github": "viewer"}, {"id": 10, "github": "disabled"}]}`
 	hu.CheckResponse(t, rec, wanted)
 }
 
 func TestCannotGetUsersHandlerAsDisabledUser(t *testing.T) {
 	rec, req, env := setupTestEnv(t, "GET", "/users", "", "disabled")
 	http.HandlerFunc(env.usersHandler).ServeHTTP(rec, req)
-	hu.ConfirmDisabledAuth(t, rec)
+	hu.ConfirmAccessDenied(t, rec)
 }
 
 func TestCannotGetUsersHandlerAsInvalidUser(t *testing.T) {

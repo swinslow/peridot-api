@@ -112,7 +112,7 @@ func ConfirmInvalidAuth(t *testing.T, rec *httptest.ResponseRecorder, errMsg str
 	}
 
 	// check that the right "error" JSON string was returned
-	wantString := `{"error": "` + errMsg + `"}`
+	wantString := `{"success": false, "error": "` + errMsg + `"}`
 	if rec.Body.String() != wantString {
 		t.Fatalf("expected %s, got %s", wantString, rec.Body.String())
 	}
@@ -134,7 +134,7 @@ func ConfirmAccessDenied(t *testing.T, rec *httptest.ResponseRecorder) {
 	}
 
 	// check that the right "error" JSON string was returned
-	wantString := `{"error": "Access denied"}`
+	wantString := `{"success": false, "error": "Access denied"}`
 	if rec.Body.String() != wantString {
 		t.Fatalf("expected %s, got %s", wantString, rec.Body.String())
 	}

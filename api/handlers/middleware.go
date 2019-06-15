@@ -95,21 +95,21 @@ func extractUser(w http.ResponseWriter, r *http.Request, minLevel datastore.User
 	if ctxCheck == nil {
 		w.Header().Set("WWW-Authenticate", "Bearer")
 		w.WriteHeader(http.StatusUnauthorized)
-		fmt.Fprintf(w, `{"error": "%s"}`, ErrAuthBearer)
+		fmt.Fprintf(w, `{"success": false, "error": "%s"}`, ErrAuthBearer)
 		return nil
 	}
 	user := ctxCheck.(*datastore.User)
 	if user.ID == 0 {
 		w.Header().Set("WWW-Authenticate", "Bearer")
 		w.WriteHeader(http.StatusUnauthorized)
-		fmt.Fprintf(w, `{"error": "%s"}`, ErrAuthGithub)
+		fmt.Fprintf(w, `{"success": false, "error": "%s"}`, ErrAuthGithub)
 		return nil
 	}
 
 	// check minimum access required for this resource
 	if user.AccessLevel < minLevel {
 		w.WriteHeader(http.StatusForbidden)
-		fmt.Fprintf(w, `{"error": "%s"}`, ErrAuthAccess)
+		fmt.Fprintf(w, `{"success": false, "error": "%s"}`, ErrAuthAccess)
 		return nil
 	}
 

@@ -57,7 +57,7 @@ func (db *DB) CreateTableSubprojects() error {
 			project_id INTEGER NOT NULL,
 			name TEXT NOT NULL,
 			fullname TEXT NOT NULL,
-			FOREIGN KEY (project_id) REFERENCES peridot.projects (id)
+			FOREIGN KEY (project_id) REFERENCES peridot.projects (id) ON DELETE CASCADE
 		)
 	`)
 	return err
@@ -72,7 +72,7 @@ func (db *DB) CreateTableRepos() error {
 			subproject_id INTEGER NOT NULL,
 			name TEXT NOT NULL,
 			address TEXT NOT NULL,
-			FOREIGN KEY (subproject_id) REFERENCES peridot.subprojects (id)
+			FOREIGN KEY (subproject_id) REFERENCES peridot.subprojects (id) ON DELETE CASCADE
 		)
 	`)
 	return err
@@ -86,7 +86,7 @@ func (db *DB) CreateTableRepoBranches() error {
 			repo_id INTEGER,
 			branch TEXT,
 			PRIMARY KEY (repo_id, branch),
-			FOREIGN KEY (repo_id) REFERENCES peridot.repos (id)
+			FOREIGN KEY (repo_id) REFERENCES peridot.repos (id) ON DELETE CASCADE
 		)
 	`)
 	return err
@@ -104,7 +104,7 @@ func (db *DB) CreateTableRepoPulls() error {
 			commit TEXT,
 			tag TEXT,
 			spdx_id TEXT,
-			FOREIGN KEY (repo_id, branch) REFERENCES peridot.repo_branches (repo_id, branch)
+			FOREIGN KEY (repo_id, branch) REFERENCES peridot.repo_branches (repo_id, branch) ON DELETE CASCADE
 		)
 	`)
 	return err
@@ -132,8 +132,8 @@ func (db *DB) CreateTableFileInstances() error {
 			repopull_id INTEGER NOT NULL,
 			filehash_id INTEGER NOT NULL,
 			path TEXT NOT NULL,
-			FOREIGN KEY (repopull_id) REFERENCES peridot.repo_pulls (id),
-			FOREIGN KEY (filehash_id) REFERENCES peridot.file_hashes (id)
+			FOREIGN KEY (repopull_id) REFERENCES peridot.repo_pulls (id) ON DELETE CASCADE,
+			FOREIGN KEY (filehash_id) REFERENCES peridot.file_hashes (id) ON DELETE CASCADE
 		)
 	`)
 	return err

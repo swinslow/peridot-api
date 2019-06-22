@@ -90,12 +90,12 @@ func TestCannotPostUsersHandlerAsOtherUser(t *testing.T) {
 	hu.ConfirmAccessDenied(t, rec)
 
 	// as commenter
-	rec, req, env = setupTestEnv(t, "POST", "/users", `{"name": "Steve", "github": "swinslow", "access": "commenter"}`, "operator")
+	rec, req, env = setupTestEnv(t, "POST", "/users", `{"name": "Steve", "github": "swinslow", "access": "commenter"}`, "commenter")
 	hu.ServeHandler(rec, req, http.HandlerFunc(env.usersHandler), "/users")
 	hu.ConfirmAccessDenied(t, rec)
 
 	// as viewer
-	rec, req, env = setupTestEnv(t, "POST", "/users", `{"name": "Steve", "github": "swinslow", "access": "viewer"}`, "operator")
+	rec, req, env = setupTestEnv(t, "POST", "/users", `{"name": "Steve", "github": "swinslow", "access": "viewer"}`, "viewer")
 	hu.ServeHandler(rec, req, http.HandlerFunc(env.usersHandler), "/users")
 	hu.ConfirmAccessDenied(t, rec)
 }

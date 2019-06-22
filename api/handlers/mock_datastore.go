@@ -10,7 +10,8 @@ import (
 )
 
 type mockDB struct {
-	mockUsers []*datastore.User
+	mockUsers    []*datastore.User
+	mockProjects []*datastore.Project
 }
 
 // createMockDB creates mock values for the handler tests to use.
@@ -23,6 +24,12 @@ func createMockDB() *mockDB {
 		&datastore.User{ID: 3, Name: "Commenter", Github: "commenter", AccessLevel: datastore.AccessCommenter},
 		&datastore.User{ID: 4, Name: "Viewer", Github: "viewer", AccessLevel: datastore.AccessViewer},
 		&datastore.User{ID: 10, Name: "Disabled", Github: "disabled", AccessLevel: datastore.AccessDisabled},
+	}
+
+	mdb.mockProjects = []*datastore.Project{
+		&datastore.Project{ID: 1, Name: "prj1", Fullname: "project 1"},
+		&datastore.Project{ID: 2, Name: "prj2", Fullname: "project 2"},
+		&datastore.Project{ID: 3, Name: "prj3", Fullname: "project 3"},
 	}
 
 	return mdb
@@ -121,20 +128,44 @@ func (mdb *mockDB) UpdateUserNameOnly(id uint32, newName string) error {
 
 // GetAllProjects returns a slice of all projects in the database.
 func (mdb *mockDB) GetAllProjects() ([]*datastore.Project, error) {
-	return []*datastore.Project{}, nil
+	return mdb.mockProjects, nil
 }
 
 // GetProjectByID returns the Project with the given ID, or nil
 // and an error if not found.
 func (mdb *mockDB) GetProjectByID(id uint32) (*datastore.Project, error) {
-	return nil, nil
+	for _, prj := range mdb.mockProjects {
+		if prj.ID == id {
+			return prj, nil
+		}
+	}
+	return nil, fmt.Errorf("Project not found with ID %d", id)
 }
 
 // AddProject adds a new Project with the given short name and
 // full name. It returns the new project's ID on success or an
 // error if failing.
 func (mdb *mockDB) AddProject(name string, fullname string) (uint32, error) {
-	return 0, nil
+	// get max mock project ID
+	var maxID uint32
+	for _, p := range mdb.mockProjects {
+		if p.Name == name {
+			return 0, fmt.Errorf("Project with name %s already exists in database", name)
+		}
+		if p.ID > maxID {
+			maxID = p.ID
+		}
+	}
+
+	newID := maxID + 1
+	prj := &datastore.Project{
+		ID:       newID,
+		Name:     name,
+		Fullname: fullname,
+	}
+
+	mdb.mockProjects = append(mdb.mockProjects, prj)
+	return newID, nil
 }
 
 // UpdateProject updates an existing Project with the given ID,
@@ -142,13 +173,38 @@ func (mdb *mockDB) AddProject(name string, fullname string) (uint32, error) {
 // empty string is passed, the existing value will remain
 // unchanged. It returns nil on success or an error if failing.
 func (mdb *mockDB) UpdateProject(id uint32, newName string, newFullname string) error {
-	return nil
+	for _, p := range mdb.mockProjects {
+		if p.ID == id {
+			if newName != "" {
+				p.Name = newName
+			}
+			if newFullname != "" {
+				p.Fullname = newFullname
+			}
+
+			return nil
+		}
+	}
+	return fmt.Errorf("Project not found with ID %d", id)
 }
 
 // DeleteProject deletes an existing Project with the given ID.
 // It returns nil on success or an error if failing.
 func (mdb *mockDB) DeleteProject(id uint32) error {
-	return nil
+	found := false
+	newMockProjects := []*datastore.Project{}
+	for _, p := range mdb.mockProjects {
+		if p.ID == id {
+			found = true
+		} else {
+			newMockProjects = append(newMockProjects, p)
+		}
+	}
+	if found {
+		mdb.mockProjects = newMockProjects
+		return nil
+	}
+	return fmt.Errorf("Project not found with ID %d", id)
 }
 
 // ===== Subprojects =====

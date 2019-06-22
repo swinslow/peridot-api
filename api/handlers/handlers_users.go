@@ -164,7 +164,7 @@ func (env *Env) usersOneHandler(w http.ResponseWriter, r *http.Request) {
 	// responses will be JSON format
 	w.Header().Set("Content-Type", "application/json")
 
-	// we only take GET requests
+	// check valid request types
 	switch r.Method {
 	case "GET":
 		env.usersOneGetHelper(w, r)

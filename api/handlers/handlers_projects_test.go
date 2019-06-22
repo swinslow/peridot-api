@@ -10,7 +10,7 @@ import (
 	hu "github.com/swinslow/peridot-api/test/handlerutils"
 )
 
-// ===== GET /users =====
+// ===== GET /projects =====
 
 func TestCanGetProjectsHandler(t *testing.T) {
 	rec, req, env := setupTestEnv(t, "GET", "/projects", ``, "viewer")
@@ -79,4 +79,100 @@ func TestCannotPostProjectsHandlerAsBadUser(t *testing.T) {
 	rec, req, env = setupTestEnv(t, "POST", "/projects", `{"name": "prj4", "fullname": "project 4"}`, "invalid")
 	hu.ServeHandler(rec, req, http.HandlerFunc(env.projectsHandler), "/projects")
 	hu.ConfirmInvalidAuth(t, rec, ErrAuthGithub)
+}
+
+// ===== GET /projects/3 =====
+
+func TestCanGetProjectsOneHandlerAsViewer(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "GET", "/projects/3", "", "viewer")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.projectsOneHandler), "/projects/{id}")
+	hu.ConfirmOKResponse(t, rec)
+
+	wanted := `{"success": true, "project": {"id": 3, "name": "prj3", "fullname": "project 3"}}`
+	hu.CheckResponse(t, rec, wanted)
+}
+
+func TestCannotGetProjectsOneHandlerAsBadUser(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "GET", "/projects/3", ``, "disabled")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.projectsOneHandler), "/projects/{id}")
+	hu.ConfirmAccessDenied(t, rec)
+
+	rec, req, env = setupTestEnv(t, "GET", "/projects/3", ``, "invalid")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.projectsOneHandler), "/projects/{id}")
+	hu.ConfirmInvalidAuth(t, rec, ErrAuthGithub)
+}
+
+// ===== PUT /projects/3 =====
+
+func TestCanPutProjectsOneHandlerAsOperator(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "PUT", "/projects/3", `{"name": "new-name", "fullname": "new-fullname"}`, "operator")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.projectsOneHandler), "/projects/{id}")
+	hu.ConfirmOKResponse(t, rec)
+
+	wanted := `{"success": true}`
+	hu.CheckResponse(t, rec, wanted)
+
+	// and verify state of database now
+	p, err := env.db.GetProjectByID(3)
+	if err != nil {
+		t.Errorf("expected nil error, got %v", err)
+	}
+	wantedProject := &datastore.Project{ID: 3, Name: "new-name", Fullname: "new-fullname"}
+	if p.ID != wantedProject.ID || p.Name != wantedProject.Name || p.Fullname != wantedProject.Fullname {
+		t.Errorf("expected %#v, got %#v", wantedProject, p)
+	}
+}
+
+func TestCanPutProjectsOneHandlerAsOperatorWithJustName(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "PUT", "/projects/3", `{"name": "new-name"}`, "operator")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.projectsOneHandler), "/projects/{id}")
+	hu.ConfirmOKResponse(t, rec)
+
+	wanted := `{"success": true}`
+	hu.CheckResponse(t, rec, wanted)
+
+	// and verify state of database now
+	p, err := env.db.GetProjectByID(3)
+	if err != nil {
+		t.Errorf("expected nil error, got %v", err)
+	}
+	wantedProject := &datastore.Project{ID: 3, Name: "new-name", Fullname: "project 3"}
+	if p.ID != wantedProject.ID || p.Name != wantedProject.Name || p.Fullname != wantedProject.Fullname {
+		t.Errorf("expected %#v, got %#v", wantedProject, p)
+	}
+}
+
+func TestCanPutProjectsOneHandlerAsOperatorWithJustFullname(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "PUT", "/projects/3", `{"fullname": "new-fullname"}`, "operator")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.projectsOneHandler), "/projects/{id}")
+	hu.ConfirmOKResponse(t, rec)
+
+	wanted := `{"success": true}`
+	hu.CheckResponse(t, rec, wanted)
+
+	// and verify state of database now
+	p, err := env.db.GetProjectByID(3)
+	if err != nil {
+		t.Errorf("expected nil error, got %v", err)
+	}
+	wantedProject := &datastore.Project{ID: 3, Name: "prj3", Fullname: "new-fullname"}
+	if p.ID != wantedProject.ID || p.Name != wantedProject.Name || p.Fullname != wantedProject.Fullname {
+		t.Errorf("expected %#v, got %#v", wantedProject, p)
+	}
+}
+
+func TestCannotPutProjectsOneHandlerAsViewer(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "PUT", "/projects/3", `{"name": "new-name", "fullname": "new-fullname"}`, "viewer")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.projectsOneHandler), "/projects/{id}")
+	hu.ConfirmAccessDenied(t, rec)
+
+	// and verify state of database now
+	p, err := env.db.GetProjectByID(3)
+	if err != nil {
+		t.Errorf("expected nil error, got %v", err)
+	}
+	wantedProject := &datastore.Project{ID: 3, Name: "prj3", Fullname: "project 3"}
+	if p.ID != wantedProject.ID || p.Name != wantedProject.Name || p.Fullname != wantedProject.Fullname {
+		t.Errorf("expected %#v, got %#v", wantedProject, p)
+	}
 }

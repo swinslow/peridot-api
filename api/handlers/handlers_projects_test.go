@@ -161,12 +161,59 @@ func TestCanPutProjectsOneHandlerAsOperatorWithJustFullname(t *testing.T) {
 	}
 }
 
-func TestCannotPutProjectsOneHandlerAsViewer(t *testing.T) {
-	rec, req, env := setupTestEnv(t, "PUT", "/projects/3", `{"name": "new-name", "fullname": "new-fullname"}`, "viewer")
+func TestCannotPutProjectsOneHandlerAsCommenter(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "PUT", "/projects/3", `{"name": "new-name", "fullname": "new-fullname"}`, "commenter")
 	hu.ServeHandler(rec, req, http.HandlerFunc(env.projectsOneHandler), "/projects/{id}")
 	hu.ConfirmAccessDenied(t, rec)
 
 	// and verify state of database now
+	p, err := env.db.GetProjectByID(3)
+	if err != nil {
+		t.Errorf("expected nil error, got %v", err)
+	}
+	wantedProject := &datastore.Project{ID: 3, Name: "prj3", Fullname: "project 3"}
+	if p.ID != wantedProject.ID || p.Name != wantedProject.Name || p.Fullname != wantedProject.Fullname {
+		t.Errorf("expected %#v, got %#v", wantedProject, p)
+	}
+}
+
+// ===== PUT /projects/3 =====
+
+func TestCanDeleteProjectsOneHandlerAsAdmin(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "DELETE", "/projects/3", ``, "admin")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.projectsOneHandler), "/projects/{id}")
+	hu.ConfirmOKResponse(t, rec)
+
+	wanted := `{"success": true}`
+	hu.CheckResponse(t, rec, wanted)
+
+	// and verify state of database now
+	projects, err := env.db.GetAllProjects()
+	if err != nil {
+		t.Errorf("expected nil error, got %v", err)
+	}
+	if len(projects) != 2 {
+		t.Errorf("expected %d, got %d", 2, len(projects))
+	}
+	p, err := env.db.GetProjectByID(3)
+	if err == nil {
+		t.Fatalf("expected non-nil error, got nil and %#v", p)
+	}
+}
+
+func TestCannotDeleteProjectsOneHandlerAsOperator(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "DELETE", "/projects/3", ``, "operator")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.projectsOneHandler), "/projects/{id}")
+	hu.ConfirmAccessDenied(t, rec)
+
+	// and verify state of database has not changed
+	projects, err := env.db.GetAllProjects()
+	if err != nil {
+		t.Errorf("expected nil error, got %v", err)
+	}
+	if len(projects) != 3 {
+		t.Errorf("expected %d, got %d", 3, len(projects))
+	}
 	p, err := env.db.GetProjectByID(3)
 	if err != nil {
 		t.Errorf("expected nil error, got %v", err)

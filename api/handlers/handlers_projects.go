@@ -108,8 +108,10 @@ func (env *Env) projectsOneHandler(w http.ResponseWriter, r *http.Request) {
 		env.projectsOneGetHelper(w, r)
 	case "PUT":
 		env.projectsOnePutHelper(w, r)
+	case "DELETE":
+		env.projectsOneDeleteHelper(w, r)
 	default:
-		w.Header().Set("Allow", "GET, PUT")
+		w.Header().Set("Allow", "GET, PUT, DELETE")
 		w.WriteHeader(http.StatusMethodNotAllowed)
 	}
 }
@@ -214,6 +216,42 @@ func (env *Env) projectsOnePutHelper(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintf(w, `{"success": false, "error": "Unable to update project"}`)
+		return
+	}
+
+	// success!
+	fmt.Fprintf(w, `{"success": true}`)
+}
+
+func (env *Env) projectsOneDeleteHelper(w http.ResponseWriter, r *http.Request) {
+	// get user and check access level
+	user := extractUser(w, r, datastore.AccessAdmin)
+	if user == nil {
+		return
+	}
+
+	// sufficient access
+	// extract ID for request
+	vars := mux.Vars(r)
+	id, ok := vars["id"]
+	if !ok {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(w, `{"success": false, "error": "Missing or invalid project ID"}`)
+		return
+	}
+	p, err := strconv.ParseUint(id, 10, 32)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(w, `{"success": false, "error": "Invalid project ID"}`)
+		return
+	}
+	projectID := uint32(p)
+
+	// delete the project
+	err = env.db.DeleteProject(projectID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintf(w, `{"success": false, "error": "Unable to delete project"}`)
 		return
 	}
 

@@ -255,6 +255,64 @@ func TestShouldNotAddUserWithGreaterThanMaxID(t *testing.T) {
 	}
 }
 
+func TestShouldUpdateUserAllDetails(t *testing.T) {
+	// set up mock
+	sqldb, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("got error when creating db mock: %v", err)
+	}
+	defer sqldb.Close()
+	db := DB{sqldb: sqldb}
+
+	regexStmt := `[UPDATE peridot.users SET name = \$1, github = \$2, access_level = \$3 WHERE id = \$4]`
+	mock.ExpectPrepare(regexStmt)
+	stmt := "UPDATE peridot.users"
+	mock.ExpectExec(stmt).
+		WithArgs("Updated Name", "github-id", AccessViewer, 4).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+
+	// run the tested function
+	err = db.UpdateUser(4, "Updated Name", "github-id", AccessViewer)
+	if err != nil {
+		t.Fatalf("expected nil error, got %v", err)
+	}
+
+	// check sqlmock expectations
+	err = mock.ExpectationsWereMet()
+	if err != nil {
+		t.Errorf("unfulfilled expectations: %v", err)
+	}
+}
+
+func TestShouldUpdateUserNameOnly(t *testing.T) {
+	// set up mock
+	sqldb, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("got error when creating db mock: %v", err)
+	}
+	defer sqldb.Close()
+	db := DB{sqldb: sqldb}
+
+	regexStmt := `[UPDATE peridot.users SET name = \$1 WHERE id = \$2]`
+	mock.ExpectPrepare(regexStmt)
+	stmt := "UPDATE peridot.users"
+	mock.ExpectExec(stmt).
+		WithArgs("Updated Name", 4).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+
+	// run the tested function
+	err = db.UpdateUserNameOnly(4, "Updated Name")
+	if err != nil {
+		t.Fatalf("expected nil error, got %v", err)
+	}
+
+	// check sqlmock expectations
+	err = mock.ExpectationsWereMet()
+	if err != nil {
+		t.Errorf("unfulfilled expectations: %v", err)
+	}
+}
+
 // ===== JSON marshalling and unmarshalling =====
 func TestCanMarshalAdminUserToJSON(t *testing.T) {
 	user := &User{

@@ -108,3 +108,57 @@ func (db *DB) AddUser(id uint32, name string, github string, accessLevel UserAcc
 	}
 	return nil
 }
+
+// UpdateUser updates an existing User with the given ID,
+// changing to the specified username, Github ID and and access
+// level. It returns nil on success or an error if failing.
+func (db *DB) UpdateUser(id uint32, newName string, newGithub string, newAccessLevel UserAccessLevel) error {
+	stmt, err := db.sqldb.Prepare("UPDATE peridot.users SET name = $1, github = $2, access_level = $3 WHERE id = $4")
+	if err != nil {
+		return err
+	}
+	result, err := stmt.Exec(newName, newGithub, newAccessLevel, id)
+
+	// check error
+	if err != nil {
+		return err
+	}
+
+	// check that something was actually updated
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return fmt.Errorf("no user found with ID %v", id)
+	}
+
+	return nil
+}
+
+// UpdateUserNameOnly updates an existing User with the given ID,
+// changing to the specified username. It returns nil on success
+// or an error if failing.
+func (db *DB) UpdateUserNameOnly(id uint32, newName string) error {
+	stmt, err := db.sqldb.Prepare("UPDATE peridot.users SET name = $1 WHERE id = $2")
+	if err != nil {
+		return err
+	}
+	result, err := stmt.Exec(newName, id)
+
+	// check error
+	if err != nil {
+		return err
+	}
+
+	// check that something was actually updated
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return fmt.Errorf("no user found with ID %v", id)
+	}
+
+	return nil
+}

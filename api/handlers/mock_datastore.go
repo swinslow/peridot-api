@@ -89,6 +89,34 @@ func (mdb *mockDB) AddUser(id uint32, name string, github string, accessLevel da
 	return nil
 }
 
+// UpdateUser updates an existing User with the given ID,
+// changing to the specified username, Github ID and and access
+// level. It returns nil on success or an error if failing.
+func (mdb *mockDB) UpdateUser(id uint32, newName string, newGithub string, newAccessLevel datastore.UserAccessLevel) error {
+	for _, user := range mdb.mockUsers {
+		if user.ID == id {
+			user.Name = newName
+			user.Github = newGithub
+			user.AccessLevel = newAccessLevel
+			return nil
+		}
+	}
+	return fmt.Errorf("User not found with ID %d", id)
+}
+
+// UpdateUserNameOnly updates an existing User with the given ID,
+// changing to the specified username. It returns nil on success
+// or an error if failing.
+func (mdb *mockDB) UpdateUserNameOnly(id uint32, newName string) error {
+	for _, user := range mdb.mockUsers {
+		if user.ID == id {
+			user.Name = newName
+			return nil
+		}
+	}
+	return fmt.Errorf("User not found with ID %d", id)
+}
+
 // ===== Projects =====
 
 // GetAllProjects returns a slice of all projects in the database.

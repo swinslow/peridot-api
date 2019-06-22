@@ -28,6 +28,14 @@ type Datastore interface {
 	// user name, and access level. It returns nil on success or an
 	// error if failing.
 	AddUser(id uint32, name string, github string, accessLevel UserAccessLevel) error
+	// UpdateUser updates an existing User with the given ID,
+	// changing to the specified username, Github ID and and access
+	// level. It returns nil on success or an error if failing.
+	UpdateUser(id uint32, newName string, newGithub string, newAccessLevel UserAccessLevel) error
+	// UpdateUserNameOnly updates an existing User with the given ID,
+	// changing to the specified username. It returns nil on success
+	// or an error if failing.
+	UpdateUserNameOnly(id uint32, newName string) error
 
 	// ===== Projects =====
 	// GetAllProjects returns a slice of all projects in the database.

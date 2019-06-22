@@ -6,7 +6,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 
+	"github.com/gorilla/mux"
 	"github.com/swinslow/peridot-api/internal/datastore"
 )
 
@@ -156,4 +158,81 @@ func (env *Env) usersPostHelper(w http.ResponseWriter, r *http.Request) {
 
 	// success!
 	fmt.Fprintf(w, `{"success": true, "id": %d}`, newID)
+}
+
+func (env *Env) usersOneHandler(w http.ResponseWriter, r *http.Request) {
+	// responses will be JSON format
+	w.Header().Set("Content-Type", "application/json")
+
+	// we only take GET requests
+	switch r.Method {
+	case "GET":
+		env.usersOneGetHelper(w, r)
+	default:
+		w.Header().Set("Allow", "GET")
+		w.WriteHeader(http.StatusMethodNotAllowed)
+	}
+}
+
+func (env *Env) usersOneGetHelper(w http.ResponseWriter, r *http.Request) {
+	// get user and check access level
+	user := extractUser(w, r, datastore.AccessViewer)
+	if user == nil {
+		return
+	}
+
+	// sufficient access
+	// extract ID for request
+	vars := mux.Vars(r)
+	id, ok := vars["id"]
+	if !ok {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(w, `{"success": false, "error": "Missing or invalid user ID"}`)
+		return
+	}
+	u, err := strconv.ParseUint(id, 10, 32)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(w, `{"success": false, "error": "Invalid user ID"}`)
+		return
+	}
+	userID := uint32(u)
+
+	// get user from database
+	argUser, err := env.db.GetUserByID(userID)
+	if err != nil {
+		fmt.Fprintf(w, `{"success": false, "error": "Database retrieval error"}`)
+		return
+	}
+
+	// return different message depending whether the
+	// logged-in user is admin / self or other
+	if user.AccessLevel == datastore.AccessAdmin || user.ID == argUser.ID {
+		// admin user just does full JSON marshalling
+		// create map so we return a JSON object
+		jsData := struct {
+			Success bool            `json:"success"`
+			User    *datastore.User `json:"user"`
+		}{Success: true, User: argUser}
+		js, err := json.Marshal(jsData)
+		if err != nil {
+			fmt.Fprintf(w, `{"success": false, "error": "JSON marshalling error"}`)
+			return
+		}
+		w.Write(js)
+		return
+	}
+
+	// for non-admin, non-self recipient, need to return just id
+	// and Github username
+	jsData := struct {
+		Success bool         `json:"success"`
+		LtdUser *limitedUser `json:"user"`
+	}{Success: true, LtdUser: &limitedUser{ID: argUser.ID, Github: argUser.Github}}
+	js, err := json.Marshal(jsData)
+	if err != nil {
+		fmt.Fprintf(w, `{"success": false, "error": "JSON marshalling error"}`)
+		return
+	}
+	w.Write(js)
 }

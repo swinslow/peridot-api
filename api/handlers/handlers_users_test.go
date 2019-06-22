@@ -99,3 +99,59 @@ func TestCannotPostUsersHandlerAsOtherUser(t *testing.T) {
 	http.HandlerFunc(env.usersHandler).ServeHTTP(rec, req)
 	hu.ConfirmAccessDenied(t, rec)
 }
+
+// ===== GET /users/3 =====
+
+func TestCanGetUsersOneHandlerAsAdmin(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "GET", "/users/3", "", "admin")
+	http.HandlerFunc(env.usersOneHandler).ServeHTTP(rec, req)
+	hu.ConfirmOKResponse(t, rec)
+
+	// expect full user data b/c we're an admin
+	wanted := `{"success": true, "user": {"id": 3, "name": "Commenter", "github": "commenter", "access": "commenter"}}`
+	hu.CheckResponse(t, rec, wanted)
+}
+
+func TestCanGetUsersOneHandlerAsOtherUsers(t *testing.T) {
+	// should be same return for all EXCEPT self
+	wanted := `{"success": true, "user": {"id": 3, "github": "commenter"}}`
+
+	// as operator
+	rec, req, env := setupTestEnv(t, "GET", "/users/3", "", "operator")
+	http.HandlerFunc(env.usersOneHandler).ServeHTTP(rec, req)
+	hu.ConfirmOKResponse(t, rec)
+	hu.CheckResponse(t, rec, wanted)
+
+	// as viewer
+	rec, req, env = setupTestEnv(t, "GET", "/users/3", "", "viewer")
+	http.HandlerFunc(env.usersOneHandler).ServeHTTP(rec, req)
+	hu.ConfirmOKResponse(t, rec)
+	hu.CheckResponse(t, rec, wanted)
+
+	// and for commenter getting somebody else's data
+	wanted = `{"success": true, "user": {"id": 1, "github": "admin"}}`
+	rec, req, env = setupTestEnv(t, "GET", "/users/1", "", "commenter")
+	http.HandlerFunc(env.usersOneHandler).ServeHTTP(rec, req)
+	hu.ConfirmOKResponse(t, rec)
+	hu.CheckResponse(t, rec, wanted)
+}
+
+func TestCanGetUsersOneHandlerAsSelf(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "GET", "/users/3", "", "commenter")
+	http.HandlerFunc(env.usersOneHandler).ServeHTTP(rec, req)
+	hu.ConfirmOKResponse(t, rec)
+
+	// expect full user data b/c we're getting our own data
+	wanted := `{"success": true, "user": {"id": 3, "name": "Commenter", "github": "commenter", "access": "commenter"}}`
+	hu.CheckResponse(t, rec, wanted)
+}
+
+func TestCannotGetUsersOneHandlerAsBadUser(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "GET", "/users/3", "", "disabled")
+	http.HandlerFunc(env.usersOneHandler).ServeHTTP(rec, req)
+	hu.ConfirmAccessDenied(t, rec)
+
+	rec, req, env = setupTestEnv(t, "GET", "/users/3", "", "invalid")
+	http.HandlerFunc(env.usersOneHandler).ServeHTTP(rec, req)
+	hu.ConfirmInvalidAuth(t, rec, ErrAuthGithub)
+}

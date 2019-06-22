@@ -11,7 +11,7 @@ import (
 
 func TestCanClearDBAsAdmin(t *testing.T) {
 	rec, req, env := setupTestEnv(t, "POST", "/admin/db", `{"command": "resetDB"}`, "admin")
-	http.HandlerFunc(env.adminDBHandler).ServeHTTP(rec, req)
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.adminDBHandler), "/admin/db")
 	hu.ConfirmOKResponse(t, rec)
 
 	wanted := `{"success": true}`
@@ -29,7 +29,7 @@ func TestCanClearDBAsAdmin(t *testing.T) {
 
 func TestAdminDBRequiresJSON(t *testing.T) {
 	rec, req, env := setupTestEnv(t, "POST", "/admin/db", `command: oops`, "admin")
-	http.HandlerFunc(env.adminDBHandler).ServeHTTP(rec, req)
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.adminDBHandler), "/admin/db")
 	hu.ConfirmBadRequestResponse(t, rec)
 
 	wanted := `{"success": false, "error": "Invalid JSON request"}`
@@ -38,7 +38,7 @@ func TestAdminDBRequiresJSON(t *testing.T) {
 
 func TestAdminDBRequiresCommand(t *testing.T) {
 	rec, req, env := setupTestEnv(t, "POST", "/admin/db", `{}`, "admin")
-	http.HandlerFunc(env.adminDBHandler).ServeHTTP(rec, req)
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.adminDBHandler), "/admin/db")
 	hu.ConfirmBadRequestResponse(t, rec)
 
 	wanted := `{"success": false, "error": "No command specified"}`
@@ -47,7 +47,7 @@ func TestAdminDBRequiresCommand(t *testing.T) {
 
 func TestAdminDBRequiresKnownCommand(t *testing.T) {
 	rec, req, env := setupTestEnv(t, "POST", "/admin/db", `{"command": "oops"}`, "admin")
-	http.HandlerFunc(env.adminDBHandler).ServeHTTP(rec, req)
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.adminDBHandler), "/admin/db")
 	hu.ConfirmBadRequestResponse(t, rec)
 
 	wanted := `{"success": false, "error": "Unknown command 'oops'"}`
@@ -56,16 +56,16 @@ func TestAdminDBRequiresKnownCommand(t *testing.T) {
 func TestCannotClearDBUnlessAdmin(t *testing.T) {
 	// as operator
 	rec, req, env := setupTestEnv(t, "POST", "/admin/db", `{"command": "resetDB"}`, "operator")
-	http.HandlerFunc(env.adminDBHandler).ServeHTTP(rec, req)
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.adminDBHandler), "/admin/db")
 	hu.ConfirmAccessDenied(t, rec)
 
 	// as commenter
 	rec, req, env = setupTestEnv(t, "POST", "/admin/db", `{"command": "resetDB"}`, "commenter")
-	http.HandlerFunc(env.adminDBHandler).ServeHTTP(rec, req)
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.adminDBHandler), "/admin/db")
 	hu.ConfirmAccessDenied(t, rec)
 
 	// as viewer
 	rec, req, env = setupTestEnv(t, "POST", "/admin/db", `{"command": "resetDB"}`, "viewer")
-	http.HandlerFunc(env.adminDBHandler).ServeHTTP(rec, req)
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.adminDBHandler), "/admin/db")
 	hu.ConfirmAccessDenied(t, rec)
 }

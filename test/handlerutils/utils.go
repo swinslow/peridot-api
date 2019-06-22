@@ -5,9 +5,11 @@ package handlerutils
 
 import (
 	"io/ioutil"
+	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/gorilla/mux"
 	"github.com/yudai/gojsondiff"
 )
 
@@ -56,6 +58,15 @@ func GetBody(t *testing.T, rec *httptest.ResponseRecorder) []byte {
 func CheckResponse(t *testing.T, rec *httptest.ResponseRecorder, wanted string) {
 	got := GetBody(t, rec)
 	CheckMatch(t, wanted, got, true)
+}
+
+// ServeHandler builds and serves a Gorilla mux router for the
+// requested route, so that we will get the appropriate mux.Vars
+// mapping for unit tests.
+func ServeHandler(rec *httptest.ResponseRecorder, req *http.Request, hf http.HandlerFunc, path string) {
+	router := mux.NewRouter()
+	router.HandleFunc(path, hf)
+	router.ServeHTTP(rec, req)
 }
 
 // ConfirmOKResponse confirms that the handler returned an

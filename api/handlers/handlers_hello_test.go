@@ -22,7 +22,7 @@ func TestCanGetHelloHandler(t *testing.T) {
 	//env := Env{db: db, jwtSecretKey: "keyForTesting"}
 	env := Env{db: db}
 
-	http.HandlerFunc(env.helloHandler).ServeHTTP(rec, req)
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.helloHandler), "/hello")
 
 	// check that we got a 200 (OK)
 	if 200 != rec.Code {
@@ -52,7 +52,7 @@ func TestCannotPostHelloHandler(t *testing.T) {
 	//env := Env{db: db, jwtSecretKey: "keyForTesting"}
 	env := Env{db: db}
 
-	http.HandlerFunc(env.helloHandler).ServeHTTP(rec, req)
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.helloHandler), "/hello")
 
 	// check that we got a 405
 	if 405 != rec.Code {
@@ -77,7 +77,7 @@ func TestCannotPutHelloHandler(t *testing.T) {
 	//env := Env{db: db, jwtSecretKey: "keyForTesting"}
 	env := Env{db: db}
 
-	http.HandlerFunc(env.helloHandler).ServeHTTP(rec, req)
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.helloHandler), "/hello")
 
 	// check that we got a 405
 	if 405 != rec.Code {
@@ -102,7 +102,7 @@ func TestCannotDeleteHelloHandler(t *testing.T) {
 	//env := Env{db: db, jwtSecretKey: "keyForTesting"}
 	env := Env{db: db}
 
-	http.HandlerFunc(env.helloHandler).ServeHTTP(rec, req)
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.helloHandler), "/hello")
 
 	// check that we got a 405
 	if 405 != rec.Code {

@@ -14,7 +14,7 @@ import (
 
 func TestCanGetUsersHandlerAsAdmin(t *testing.T) {
 	rec, req, env := setupTestEnv(t, "GET", "/users", "", "admin")
-	http.HandlerFunc(env.usersHandler).ServeHTTP(rec, req)
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.usersHandler), "/users")
 	hu.ConfirmOKResponse(t, rec)
 
 	// expect full user data b/c we're an admin
@@ -28,30 +28,30 @@ func TestCanGetUsersHandlerAsOtherUsers(t *testing.T) {
 
 	// as operator
 	rec, req, env := setupTestEnv(t, "GET", "/users", "", "operator")
-	http.HandlerFunc(env.usersHandler).ServeHTTP(rec, req)
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.usersHandler), "/users")
 	hu.ConfirmOKResponse(t, rec)
 	hu.CheckResponse(t, rec, wanted)
 
 	// as commenter
 	rec, req, env = setupTestEnv(t, "GET", "/users", "", "commenter")
-	http.HandlerFunc(env.usersHandler).ServeHTTP(rec, req)
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.usersHandler), "/users")
 	hu.ConfirmOKResponse(t, rec)
 	hu.CheckResponse(t, rec, wanted)
 
 	// as viewer
 	rec, req, env = setupTestEnv(t, "GET", "/users", "", "viewer")
-	http.HandlerFunc(env.usersHandler).ServeHTTP(rec, req)
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.usersHandler), "/users")
 	hu.ConfirmOKResponse(t, rec)
 	hu.CheckResponse(t, rec, wanted)
 }
 
 func TestCannotGetUsersHandlerAsBadUser(t *testing.T) {
 	rec, req, env := setupTestEnv(t, "GET", "/users", "", "disabled")
-	http.HandlerFunc(env.usersHandler).ServeHTTP(rec, req)
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.usersHandler), "/users")
 	hu.ConfirmAccessDenied(t, rec)
 
 	rec, req, env = setupTestEnv(t, "GET", "/users", "", "invalid")
-	http.HandlerFunc(env.usersHandler).ServeHTTP(rec, req)
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.usersHandler), "/users")
 	hu.ConfirmInvalidAuth(t, rec, ErrAuthGithub)
 }
 
@@ -59,7 +59,7 @@ func TestCannotGetUsersHandlerAsBadUser(t *testing.T) {
 
 func TestCanPostUsersHandlerAsAdmin(t *testing.T) {
 	rec, req, env := setupTestEnv(t, "POST", "/users", `{"name": "Steve", "github": "swinslow", "access": "operator"}`, "admin")
-	http.HandlerFunc(env.usersHandler).ServeHTTP(rec, req)
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.usersHandler), "/users")
 	hu.ConfirmOKResponse(t, rec)
 
 	wanted := `{"success": true, "id": 11}`
@@ -86,17 +86,17 @@ func TestCanPostUsersHandlerAsAdmin(t *testing.T) {
 func TestCannotPostUsersHandlerAsOtherUser(t *testing.T) {
 	// as operator
 	rec, req, env := setupTestEnv(t, "POST", "/users", `{"name": "Steve", "github": "swinslow", "access": "operator"}`, "operator")
-	http.HandlerFunc(env.usersHandler).ServeHTTP(rec, req)
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.usersHandler), "/users")
 	hu.ConfirmAccessDenied(t, rec)
 
 	// as commenter
 	rec, req, env = setupTestEnv(t, "POST", "/users", `{"name": "Steve", "github": "swinslow", "access": "commenter"}`, "operator")
-	http.HandlerFunc(env.usersHandler).ServeHTTP(rec, req)
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.usersHandler), "/users")
 	hu.ConfirmAccessDenied(t, rec)
 
 	// as viewer
 	rec, req, env = setupTestEnv(t, "POST", "/users", `{"name": "Steve", "github": "swinslow", "access": "viewer"}`, "operator")
-	http.HandlerFunc(env.usersHandler).ServeHTTP(rec, req)
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.usersHandler), "/users")
 	hu.ConfirmAccessDenied(t, rec)
 }
 
@@ -104,7 +104,7 @@ func TestCannotPostUsersHandlerAsOtherUser(t *testing.T) {
 
 func TestCanGetUsersOneHandlerAsAdmin(t *testing.T) {
 	rec, req, env := setupTestEnv(t, "GET", "/users/3", "", "admin")
-	http.HandlerFunc(env.usersOneHandler).ServeHTTP(rec, req)
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.usersOneHandler), "/users/{id}")
 	hu.ConfirmOKResponse(t, rec)
 
 	// expect full user data b/c we're an admin
@@ -118,27 +118,27 @@ func TestCanGetUsersOneHandlerAsOtherUsers(t *testing.T) {
 
 	// as operator
 	rec, req, env := setupTestEnv(t, "GET", "/users/3", "", "operator")
-	http.HandlerFunc(env.usersOneHandler).ServeHTTP(rec, req)
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.usersOneHandler), "/users/{id}")
 	hu.ConfirmOKResponse(t, rec)
 	hu.CheckResponse(t, rec, wanted)
 
 	// as viewer
 	rec, req, env = setupTestEnv(t, "GET", "/users/3", "", "viewer")
-	http.HandlerFunc(env.usersOneHandler).ServeHTTP(rec, req)
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.usersOneHandler), "/users/{id}")
 	hu.ConfirmOKResponse(t, rec)
 	hu.CheckResponse(t, rec, wanted)
 
 	// and for commenter getting somebody else's data
 	wanted = `{"success": true, "user": {"id": 1, "github": "admin"}}`
 	rec, req, env = setupTestEnv(t, "GET", "/users/1", "", "commenter")
-	http.HandlerFunc(env.usersOneHandler).ServeHTTP(rec, req)
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.usersOneHandler), "/users/{id}")
 	hu.ConfirmOKResponse(t, rec)
 	hu.CheckResponse(t, rec, wanted)
 }
 
 func TestCanGetUsersOneHandlerAsSelf(t *testing.T) {
 	rec, req, env := setupTestEnv(t, "GET", "/users/3", "", "commenter")
-	http.HandlerFunc(env.usersOneHandler).ServeHTTP(rec, req)
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.usersOneHandler), "/users/{id}")
 	hu.ConfirmOKResponse(t, rec)
 
 	// expect full user data b/c we're getting our own data
@@ -148,10 +148,10 @@ func TestCanGetUsersOneHandlerAsSelf(t *testing.T) {
 
 func TestCannotGetUsersOneHandlerAsBadUser(t *testing.T) {
 	rec, req, env := setupTestEnv(t, "GET", "/users/3", "", "disabled")
-	http.HandlerFunc(env.usersOneHandler).ServeHTTP(rec, req)
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.usersOneHandler), "/users/{id}")
 	hu.ConfirmAccessDenied(t, rec)
 
 	rec, req, env = setupTestEnv(t, "GET", "/users/3", "", "invalid")
-	http.HandlerFunc(env.usersOneHandler).ServeHTTP(rec, req)
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.usersOneHandler), "/users/{id}")
 	hu.ConfirmInvalidAuth(t, rec, ErrAuthGithub)
 }

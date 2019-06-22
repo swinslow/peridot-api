@@ -36,7 +36,7 @@ func TestCannotGetProjectsHandlerAsBadUser(t *testing.T) {
 func TestCanPostProjectsHandlerAsOperator(t *testing.T) {
 	rec, req, env := setupTestEnv(t, "POST", "/projects", `{"name": "prj4", "fullname": "project 4"}`, "operator")
 	hu.ServeHandler(rec, req, http.HandlerFunc(env.projectsHandler), "/projects")
-	hu.ConfirmOKResponse(t, rec)
+	hu.ConfirmCreatedResponse(t, rec)
 
 	wanted := `{"success": true, "id": 4}`
 	hu.CheckResponse(t, rec, wanted)

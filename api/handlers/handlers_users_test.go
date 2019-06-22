@@ -60,7 +60,7 @@ func TestCannotGetUsersHandlerAsBadUser(t *testing.T) {
 func TestCanPostUsersHandlerAsAdmin(t *testing.T) {
 	rec, req, env := setupTestEnv(t, "POST", "/users", `{"name": "Steve", "github": "swinslow", "access": "operator"}`, "admin")
 	hu.ServeHandler(rec, req, http.HandlerFunc(env.usersHandler), "/users")
-	hu.ConfirmOKResponse(t, rec)
+	hu.ConfirmCreatedResponse(t, rec)
 
 	wanted := `{"success": true, "id": 11}`
 	hu.CheckResponse(t, rec, wanted)

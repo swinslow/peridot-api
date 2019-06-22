@@ -94,6 +94,7 @@ func (env *Env) projectsPostHelper(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// success!
+	w.WriteHeader(http.StatusCreated)
 	fmt.Fprintf(w, `{"success": true, "id": %d}`, newID)
 }
 

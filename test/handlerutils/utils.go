@@ -84,6 +84,21 @@ func ConfirmOKResponse(t *testing.T, rec *httptest.ResponseRecorder) {
 	}
 }
 
+// ConfirmCreatedResponse confirms that the handler returned a
+// Created (201) response and that the header is set for JSON content.
+func ConfirmCreatedResponse(t *testing.T, rec *httptest.ResponseRecorder) {
+	// check that we got a 201 (Created)
+	if 201 != rec.Code {
+		t.Errorf("Expected %d, got %d", 201, rec.Code)
+	}
+
+	// check that content type was application/json
+	header := rec.Result().Header
+	if header.Get("Content-Type") != "application/json" {
+		t.Errorf("expected %v, got %v", "application/json", header.Get("Content-Type"))
+	}
+}
+
 // ConfirmBadRequestResponse confirms that the handler returned a
 // Bad Request (400) response and that the header is set for JSON content.
 func ConfirmBadRequestResponse(t *testing.T, rec *httptest.ResponseRecorder) {

@@ -155,3 +155,233 @@ func TestCannotGetUsersOneHandlerAsBadUser(t *testing.T) {
 	hu.ServeHandler(rec, req, http.HandlerFunc(env.usersOneHandler), "/users/{id}")
 	hu.ConfirmInvalidAuth(t, rec, ErrAuthGithub)
 }
+
+// ===== PUT /users/3 =====
+
+func TestCanPutUsersOneHandlerAsAdmin(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "PUT", "/users/3", `{"name": "new-name", "github": "new-github", "access": "operator"}`, "admin")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.usersOneHandler), "/users/{id}")
+	hu.ConfirmOKResponse(t, rec)
+
+	wanted := `{"success": true}`
+	hu.CheckResponse(t, rec, wanted)
+
+	// and verify state of database now
+	u, err := env.db.GetUserByID(3)
+	if err != nil {
+		t.Errorf("expected nil error, got %v", err)
+	}
+	wantedUser := &datastore.User{ID: 3, Name: "new-name", Github: "new-github", AccessLevel: datastore.AccessOperator}
+	if u.ID != wantedUser.ID || u.Name != wantedUser.Name || u.Github != wantedUser.Github || u.AccessLevel != wantedUser.AccessLevel {
+		t.Errorf("expected %#v, got %#v", wantedUser, u)
+	}
+}
+
+func TestCanPutUsersOneHandlerAsAdminWithJustName(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "PUT", "/users/3", `{"name": "new-name"}`, "admin")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.usersOneHandler), "/users/{id}")
+	hu.ConfirmOKResponse(t, rec)
+
+	wanted := `{"success": true}`
+	hu.CheckResponse(t, rec, wanted)
+
+	// and verify state of database now
+	u, err := env.db.GetUserByID(3)
+	if err != nil {
+		t.Errorf("expected nil error, got %v", err)
+	}
+	wantedUser := &datastore.User{ID: 3, Name: "new-name", Github: "commenter", AccessLevel: datastore.AccessCommenter}
+	if u.ID != wantedUser.ID || u.Name != wantedUser.Name || u.Github != wantedUser.Github || u.AccessLevel != wantedUser.AccessLevel {
+		t.Errorf("expected %#v, got %#v", wantedUser, u)
+	}
+}
+
+func TestCanPutUsersOneHandlerAsAdminWithJustGithub(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "PUT", "/users/3", `{"github": "new-github"}`, "admin")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.usersOneHandler), "/users/{id}")
+	hu.ConfirmOKResponse(t, rec)
+
+	wanted := `{"success": true}`
+	hu.CheckResponse(t, rec, wanted)
+
+	// and verify state of database now
+	u, err := env.db.GetUserByID(3)
+	if err != nil {
+		t.Errorf("expected nil error, got %v", err)
+	}
+	wantedUser := &datastore.User{ID: 3, Name: "Commenter", Github: "new-github", AccessLevel: datastore.AccessCommenter}
+	if u.ID != wantedUser.ID || u.Name != wantedUser.Name || u.Github != wantedUser.Github || u.AccessLevel != wantedUser.AccessLevel {
+		t.Errorf("expected %#v, got %#v", wantedUser, u)
+	}
+}
+
+func TestCanPutUsersOneHandlerAsAdminWithJustAccessLevel(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "PUT", "/users/3", `{"access": "operator"}`, "admin")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.usersOneHandler), "/users/{id}")
+	hu.ConfirmOKResponse(t, rec)
+
+	wanted := `{"success": true}`
+	hu.CheckResponse(t, rec, wanted)
+
+	// and verify state of database now
+	u, err := env.db.GetUserByID(3)
+	if err != nil {
+		t.Errorf("expected nil error, got %v", err)
+	}
+	wantedUser := &datastore.User{ID: 3, Name: "Commenter", Github: "commenter", AccessLevel: datastore.AccessOperator}
+	if u.ID != wantedUser.ID || u.Name != wantedUser.Name || u.Github != wantedUser.Github || u.AccessLevel != wantedUser.AccessLevel {
+		t.Errorf("expected %#v, got %#v", wantedUser, u)
+	}
+}
+
+func TestCannotPutUsersOneHandlerAsAdminWithInvalidAccessLevel(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "PUT", "/users/3", `{"access": "oops"}`, "admin")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.usersOneHandler), "/users/{id}")
+	hu.ConfirmBadRequestResponse(t, rec)
+}
+
+func TestCanPutUsersOneHandlerAsOperatorSelfWithJustName(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "PUT", "/users/2", `{"name": "new-operator-name"}`, "operator")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.usersOneHandler), "/users/{id}")
+	hu.ConfirmOKResponse(t, rec)
+
+	wanted := `{"success": true}`
+	hu.CheckResponse(t, rec, wanted)
+
+	// and verify state of database now
+	u, err := env.db.GetUserByID(2)
+	if err != nil {
+		t.Errorf("expected nil error, got %v", err)
+	}
+	wantedUser := &datastore.User{ID: 2, Name: "new-operator-name", Github: "operator", AccessLevel: datastore.AccessOperator}
+	if u.ID != wantedUser.ID || u.Name != wantedUser.Name || u.Github != wantedUser.Github || u.AccessLevel != wantedUser.AccessLevel {
+		t.Errorf("expected %#v, got %#v", wantedUser, u)
+	}
+}
+
+func TestCannotPutUsersOneHandlerAsOperatorForOther(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "PUT", "/users/3", `{"name": "new-operator-name"}`, "operator")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.usersOneHandler), "/users/{id}")
+	hu.ConfirmAccessDenied(t, rec)
+}
+
+func TestCannotPutUsersOneHandlerAsOperatorForSelfOtherThanName(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "PUT", "/users/2", `{"github": "new-operator-gh"}`, "operator")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.usersOneHandler), "/users/{id}")
+	hu.ConfirmAccessDenied(t, rec)
+
+	rec, req, env = setupTestEnv(t, "PUT", "/users/2", `{"access": "admin"}`, "operator")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.usersOneHandler), "/users/{id}")
+	hu.ConfirmAccessDenied(t, rec)
+
+	rec, req, env = setupTestEnv(t, "PUT", "/users/2", `{"github": "new-operator-gh", "access": "admin"}`, "operator")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.usersOneHandler), "/users/{id}")
+	hu.ConfirmAccessDenied(t, rec)
+
+	rec, req, env = setupTestEnv(t, "PUT", "/users/2", `{"name": "new-operator-name", "github": "new-operator-gh", "access": "admin"}`, "operator")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.usersOneHandler), "/users/{id}")
+	hu.ConfirmAccessDenied(t, rec)
+}
+
+func TestCanPutUsersOneHandlerAsCommenterSelfWithJustName(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "PUT", "/users/3", `{"name": "new-commenter-name"}`, "commenter")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.usersOneHandler), "/users/{id}")
+	hu.ConfirmOKResponse(t, rec)
+
+	wanted := `{"success": true}`
+	hu.CheckResponse(t, rec, wanted)
+
+	// and verify state of database now
+	u, err := env.db.GetUserByID(3)
+	if err != nil {
+		t.Errorf("expected nil error, got %v", err)
+	}
+	wantedUser := &datastore.User{ID: 3, Name: "new-commenter-name", Github: "commenter", AccessLevel: datastore.AccessCommenter}
+	if u.ID != wantedUser.ID || u.Name != wantedUser.Name || u.Github != wantedUser.Github || u.AccessLevel != wantedUser.AccessLevel {
+		t.Errorf("expected %#v, got %#v", wantedUser, u)
+	}
+}
+
+func TestCannotPutUsersOneHandlerAsCommenterForOther(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "PUT", "/users/2", `{"name": "new-commenter-name"}`, "commenter")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.usersOneHandler), "/users/{id}")
+	hu.ConfirmAccessDenied(t, rec)
+}
+
+func TestCannotPutUsersOneHandlerAsCommenterForSelfOtherThanName(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "PUT", "/users/3", `{"github": "new-commenter-gh"}`, "commenter")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.usersOneHandler), "/users/{id}")
+	hu.ConfirmAccessDenied(t, rec)
+
+	rec, req, env = setupTestEnv(t, "PUT", "/users/3", `{"access": "admin"}`, "commenter")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.usersOneHandler), "/users/{id}")
+	hu.ConfirmAccessDenied(t, rec)
+
+	rec, req, env = setupTestEnv(t, "PUT", "/users/3", `{"github": "new-commenter-gh", "access": "admin"}`, "commenter")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.usersOneHandler), "/users/{id}")
+	hu.ConfirmAccessDenied(t, rec)
+
+	rec, req, env = setupTestEnv(t, "PUT", "/users/3", `{"name": "new-commenter-name", "github": "new-commenter-gh", "access": "admin"}`, "commenter")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.usersOneHandler), "/users/{id}")
+	hu.ConfirmAccessDenied(t, rec)
+}
+
+func TestCanPutUsersOneHandlerAsViewerSelfWithJustName(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "PUT", "/users/4", `{"name": "new-viewer-name"}`, "viewer")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.usersOneHandler), "/users/{id}")
+	hu.ConfirmOKResponse(t, rec)
+
+	wanted := `{"success": true}`
+	hu.CheckResponse(t, rec, wanted)
+
+	// and verify state of database now
+	u, err := env.db.GetUserByID(4)
+	if err != nil {
+		t.Errorf("expected nil error, got %v", err)
+	}
+	wantedUser := &datastore.User{ID: 4, Name: "new-viewer-name", Github: "viewer", AccessLevel: datastore.AccessViewer}
+	if u.ID != wantedUser.ID || u.Name != wantedUser.Name || u.Github != wantedUser.Github || u.AccessLevel != wantedUser.AccessLevel {
+		t.Errorf("expected %#v, got %#v", wantedUser, u)
+	}
+}
+
+func TestCannotPutUsersOneHandlerAsViewerForOther(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "PUT", "/users/2", `{"name": "new-viewer-name"}`, "viewer")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.usersOneHandler), "/users/{id}")
+	hu.ConfirmAccessDenied(t, rec)
+}
+
+func TestCannotPutUsersOneHandlerAsViewerForSelfOtherThanName(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "PUT", "/users/4", `{"github": "new-viewer-gh"}`, "viewer")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.usersOneHandler), "/users/{id}")
+	hu.ConfirmAccessDenied(t, rec)
+
+	rec, req, env = setupTestEnv(t, "PUT", "/users/4", `{"access": "admin"}`, "viewer")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.usersOneHandler), "/users/{id}")
+	hu.ConfirmAccessDenied(t, rec)
+
+	rec, req, env = setupTestEnv(t, "PUT", "/users/4", `{"github": "new-viewer-gh", "access": "admin"}`, "viewer")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.usersOneHandler), "/users/{id}")
+	hu.ConfirmAccessDenied(t, rec)
+
+	rec, req, env = setupTestEnv(t, "PUT", "/users/4", `{"name": "new-viewer-name", "github": "new-viewer-gh", "access": "admin"}`, "viewer")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.usersOneHandler), "/users/{id}")
+	hu.ConfirmAccessDenied(t, rec)
+}
+
+func TestCannotPutUsersOneHandlerAsBadUser(t *testing.T) {
+	// disabled, for self
+	rec, req, env := setupTestEnv(t, "PUT", "/users/10", `{"name": "new-name"}`, "disabled")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.usersOneHandler), "/users/{id}")
+	hu.ConfirmAccessDenied(t, rec)
+
+	// disabled, for other
+	rec, req, env = setupTestEnv(t, "PUT", "/users/3", `{"name": "new-name"}`, "disabled")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.usersOneHandler), "/users/{id}")
+	hu.ConfirmAccessDenied(t, rec)
+
+	// invalid
+	rec, req, env = setupTestEnv(t, "PUT", "/users/3", `{"name": "new-name"}`, "invalid")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.usersOneHandler), "/users/{id}")
+	hu.ConfirmInvalidAuth(t, rec, ErrAuthGithub)
+}

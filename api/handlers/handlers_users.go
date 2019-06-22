@@ -168,8 +168,10 @@ func (env *Env) usersOneHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
 		env.usersOneGetHelper(w, r)
+	case "PUT":
+		env.usersOnePutHelper(w, r)
 	default:
-		w.Header().Set("Allow", "GET")
+		w.Header().Set("Allow", "GET, PUT")
 		w.WriteHeader(http.StatusMethodNotAllowed)
 	}
 }
@@ -235,4 +237,103 @@ func (env *Env) usersOneGetHelper(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Write(js)
+}
+
+func (env *Env) usersOnePutHelper(w http.ResponseWriter, r *http.Request) {
+	// get user and check access level
+	user := extractUser(w, r, datastore.AccessViewer)
+	if user == nil {
+		return
+	}
+
+	// sufficient access generally, but maybe not for the requested user?
+	// extract ID for request
+	vars := mux.Vars(r)
+	id, ok := vars["id"]
+	if !ok {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(w, `{"success": false, "error": "Missing or invalid user ID"}`)
+		return
+	}
+	u, err := strconv.ParseUint(id, 10, 32)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(w, `{"success": false, "error": "Invalid user ID"}`)
+		return
+	}
+	userID := uint32(u)
+
+	// if not admin and not self, access will be denied
+	if user.AccessLevel != datastore.AccessAdmin && user.ID != userID {
+		w.WriteHeader(http.StatusForbidden)
+		fmt.Fprintf(w, `{"success": false, "error": "Access denied"}`)
+		return
+	}
+
+	// get existing user from database
+	existingUser, err := env.db.GetUserByID(userID)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		fmt.Fprintf(w, `{"success": false, "error": "Unknown user ID"}`)
+		return
+	}
+
+	// parse JSON request
+	js := map[string]string{}
+	err = json.NewDecoder(r.Body).Decode(&js)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(w, `{"success": false, "error": "Invalid JSON request"}`)
+		return
+	}
+
+	// and extract data; if absent, use existing data
+	newName, ok := js["name"]
+	if !ok {
+		newName = existingUser.Name
+	}
+	newGithub, ok := js["github"]
+	if ok {
+		// unless we're admin, access will be denied
+		if user.AccessLevel != datastore.AccessAdmin {
+			w.WriteHeader(http.StatusForbidden)
+			fmt.Fprintf(w, `{"success": false, "error": "Access denied"}`)
+			return
+		}
+	} else {
+		newGithub = existingUser.Github
+	}
+	var newUal datastore.UserAccessLevel
+	newAccess, ok := js["access"]
+	if ok {
+		// unless we're admin, access will be denied
+		if user.AccessLevel != datastore.AccessAdmin {
+			w.WriteHeader(http.StatusForbidden)
+			fmt.Fprintf(w, `{"success": false, "error": "Access denied"}`)
+			return
+		}
+		newUal, err = datastore.UserAccessLevelFromString(newAccess)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			fmt.Fprintf(w, `{"success": false, "error": "Invalid value for 'access'"}`)
+			return
+		}
+	} else {
+		newUal = existingUser.AccessLevel
+	}
+
+	// modify the user data - if admin, for all; if not, name only
+	if user.AccessLevel == datastore.AccessAdmin {
+		err = env.db.UpdateUser(userID, newName, newGithub, newUal)
+	} else {
+		err = env.db.UpdateUserNameOnly(userID, newName)
+	}
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintf(w, `{"success": false, "error": "Unable to update user"}`)
+		return
+	}
+
+	// success!
+	fmt.Fprintf(w, `{"success": true}`)
 }

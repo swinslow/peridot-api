@@ -21,5 +21,5 @@ func (env *Env) RegisterHandlers(router *mux.Router) {
 
 	// /users -- user data
 	router.HandleFunc("/users", env.validateTokenMiddleware(env.usersHandler)).Methods("GET", "POST")
-	router.HandleFunc("/users/{id:[0-9]+}", env.validateTokenMiddleware(env.usersOneHandler)).Methods("GET")
+	router.HandleFunc("/users/{id:[0-9]+}", env.validateTokenMiddleware(env.usersOneHandler)).Methods("GET", "PUT")
 }

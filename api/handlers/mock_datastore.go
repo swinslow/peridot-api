@@ -10,10 +10,11 @@ import (
 )
 
 type mockDB struct {
-	mockUsers       []*datastore.User
-	mockProjects    []*datastore.Project
-	mockSubprojects []*datastore.Subproject
-	mockRepos       []*datastore.Repo
+	mockUsers        []*datastore.User
+	mockProjects     []*datastore.Project
+	mockSubprojects  []*datastore.Subproject
+	mockRepos        []*datastore.Repo
+	mockRepoBranches []*datastore.RepoBranch
 }
 
 // createMockDB creates mock values for the handler tests to use.
@@ -21,31 +22,40 @@ func createMockDB() *mockDB {
 	mdb := &mockDB{}
 
 	mdb.mockUsers = []*datastore.User{
-		&datastore.User{ID: 1, Name: "Admin", Github: "admin", AccessLevel: datastore.AccessAdmin},
-		&datastore.User{ID: 2, Name: "Operator", Github: "operator", AccessLevel: datastore.AccessOperator},
-		&datastore.User{ID: 3, Name: "Commenter", Github: "commenter", AccessLevel: datastore.AccessCommenter},
-		&datastore.User{ID: 4, Name: "Viewer", Github: "viewer", AccessLevel: datastore.AccessViewer},
-		&datastore.User{ID: 10, Name: "Disabled", Github: "disabled", AccessLevel: datastore.AccessDisabled},
+		{ID: 1, Name: "Admin", Github: "admin", AccessLevel: datastore.AccessAdmin},
+		{ID: 2, Name: "Operator", Github: "operator", AccessLevel: datastore.AccessOperator},
+		{ID: 3, Name: "Commenter", Github: "commenter", AccessLevel: datastore.AccessCommenter},
+		{ID: 4, Name: "Viewer", Github: "viewer", AccessLevel: datastore.AccessViewer},
+		{ID: 10, Name: "Disabled", Github: "disabled", AccessLevel: datastore.AccessDisabled},
 	}
 
 	mdb.mockProjects = []*datastore.Project{
-		&datastore.Project{ID: 1, Name: "prj1", Fullname: "project 1"},
-		&datastore.Project{ID: 2, Name: "prj2", Fullname: "project 2"},
-		&datastore.Project{ID: 3, Name: "prj3", Fullname: "project 3"},
+		{ID: 1, Name: "prj1", Fullname: "project 1"},
+		{ID: 2, Name: "prj2", Fullname: "project 2"},
+		{ID: 3, Name: "prj3", Fullname: "project 3"},
 	}
 
 	mdb.mockSubprojects = []*datastore.Subproject{
-		&datastore.Subproject{ID: 1, ProjectID: 3, Name: "subprj1", Fullname: "subproject 1"},
-		&datastore.Subproject{ID: 2, ProjectID: 1, Name: "subprj2", Fullname: "subproject 2"},
-		&datastore.Subproject{ID: 3, ProjectID: 1, Name: "subprj3", Fullname: "subproject 3"},
-		&datastore.Subproject{ID: 4, ProjectID: 1, Name: "subprj4", Fullname: "subproject 4"},
+		{ID: 1, ProjectID: 3, Name: "subprj1", Fullname: "subproject 1"},
+		{ID: 2, ProjectID: 1, Name: "subprj2", Fullname: "subproject 2"},
+		{ID: 3, ProjectID: 1, Name: "subprj3", Fullname: "subproject 3"},
+		{ID: 4, ProjectID: 1, Name: "subprj4", Fullname: "subproject 4"},
 	}
 
 	mdb.mockRepos = []*datastore.Repo{
-		&datastore.Repo{ID: 1, SubprojectID: 2, Name: "repo1", Address: "https://example.com/repo1.git"},
-		&datastore.Repo{ID: 2, SubprojectID: 4, Name: "repo2", Address: "https://example.com/repo2.git"},
-		&datastore.Repo{ID: 3, SubprojectID: 4, Name: "repo3", Address: "https://example.com/repo3.git"},
-		&datastore.Repo{ID: 4, SubprojectID: 4, Name: "repo4", Address: "https://example.com/repo4.git"},
+		{ID: 1, SubprojectID: 2, Name: "repo1", Address: "https://example.com/repo1.git"},
+		{ID: 2, SubprojectID: 4, Name: "repo2", Address: "https://example.com/repo2.git"},
+		{ID: 3, SubprojectID: 4, Name: "repo3", Address: "https://example.com/repo3.git"},
+		{ID: 4, SubprojectID: 4, Name: "repo4", Address: "https://example.com/repo4.git"},
+	}
+
+	mdb.mockRepoBranches = []*datastore.RepoBranch{
+		{RepoID: 2, Branch: "master"},
+		{RepoID: 2, Branch: "alpha"},
+		{RepoID: 4, Branch: "master"},
+		{RepoID: 4, Branch: "dev"},
+		{RepoID: 2, Branch: "beta"},
+		{RepoID: 1, Branch: "master"},
 	}
 
 	return mdb
@@ -482,13 +492,38 @@ func (mdb *mockDB) DeleteRepo(id uint32) error {
 // GetAllRepoBranchesForRepoID returns a slice of all repo
 // branches in the database for the given Repo ID.
 func (mdb *mockDB) GetAllRepoBranchesForRepoID(repoID uint32) ([]*datastore.RepoBranch, error) {
-	return []*datastore.RepoBranch{}, nil
+	rbs := []*datastore.RepoBranch{}
+	for _, rb := range mdb.mockRepoBranches {
+		if rb.RepoID == repoID {
+			rbs = append(rbs, rb)
+		}
+	}
+	return rbs, nil
 }
 
 // AddRepoBranch adds a new repo branch as specified,
 // referencing the designated Repo. It returns nil on
 // success or an error if failing.
 func (mdb *mockDB) AddRepoBranch(repoID uint32, branch string) error {
+	// make sure repo ID is valid
+	_, err := mdb.GetRepoByID(repoID)
+	if err != nil {
+		return fmt.Errorf("Repo not found with ID %d", repoID)
+	}
+
+	// see if branch is already present for this repo
+	for _, rb := range mdb.mockRepoBranches {
+		if rb.RepoID == repoID && rb.Branch == branch {
+			return fmt.Errorf("Branch %s for repo ID %d already exists in database", branch, repoID)
+		}
+	}
+
+	rb := &datastore.RepoBranch{
+		RepoID: repoID,
+		Branch: branch,
+	}
+
+	mdb.mockRepoBranches = append(mdb.mockRepoBranches, rb)
 	return nil
 }
 
@@ -496,7 +531,20 @@ func (mdb *mockDB) AddRepoBranch(repoID uint32, branch string) error {
 // the given branch name for the given repo ID.
 // It returns nil on success or an error if failing.
 func (mdb *mockDB) DeleteRepoBranch(repoID uint32, branch string) error {
-	return nil
+	found := false
+	newMockRepoBranches := []*datastore.RepoBranch{}
+	for _, rb := range mdb.mockRepoBranches {
+		if rb.RepoID == repoID && rb.Branch == branch {
+			found = true
+		} else {
+			newMockRepoBranches = append(newMockRepoBranches, rb)
+		}
+	}
+	if found {
+		mdb.mockRepoBranches = newMockRepoBranches
+		return nil
+	}
+	return fmt.Errorf("Branch %s not found for repo ID %d", branch, repoID)
 }
 
 // ===== RepoPulls =====

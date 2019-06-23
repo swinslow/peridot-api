@@ -12,10 +12,7 @@ import (
 func TestCanClearDBAsAdmin(t *testing.T) {
 	rec, req, env := setupTestEnv(t, "POST", "/admin/db", `{"command": "resetDB"}`, "admin")
 	hu.ServeHandler(rec, req, http.HandlerFunc(env.adminDBHandler), "/admin/db")
-	hu.ConfirmOKResponse(t, rec)
-
-	wanted := `{"success": true}`
-	hu.CheckResponse(t, rec, wanted)
+	hu.ConfirmNoContentResponse(t, rec)
 
 	// and verify state of database now
 	users, err := env.db.GetAllUsers()

@@ -107,10 +107,7 @@ func TestCannotGetProjectsOneHandlerAsBadUser(t *testing.T) {
 func TestCanPutProjectsOneHandlerAsOperator(t *testing.T) {
 	rec, req, env := setupTestEnv(t, "PUT", "/projects/3", `{"name": "new-name", "fullname": "new-fullname"}`, "operator")
 	hu.ServeHandler(rec, req, http.HandlerFunc(env.projectsOneHandler), "/projects/{id}")
-	hu.ConfirmOKResponse(t, rec)
-
-	wanted := `{"success": true}`
-	hu.CheckResponse(t, rec, wanted)
+	hu.ConfirmNoContentResponse(t, rec)
 
 	// and verify state of database now
 	p, err := env.db.GetProjectByID(3)
@@ -126,10 +123,7 @@ func TestCanPutProjectsOneHandlerAsOperator(t *testing.T) {
 func TestCanPutProjectsOneHandlerAsOperatorWithJustName(t *testing.T) {
 	rec, req, env := setupTestEnv(t, "PUT", "/projects/3", `{"name": "new-name"}`, "operator")
 	hu.ServeHandler(rec, req, http.HandlerFunc(env.projectsOneHandler), "/projects/{id}")
-	hu.ConfirmOKResponse(t, rec)
-
-	wanted := `{"success": true}`
-	hu.CheckResponse(t, rec, wanted)
+	hu.ConfirmNoContentResponse(t, rec)
 
 	// and verify state of database now
 	p, err := env.db.GetProjectByID(3)
@@ -145,10 +139,7 @@ func TestCanPutProjectsOneHandlerAsOperatorWithJustName(t *testing.T) {
 func TestCanPutProjectsOneHandlerAsOperatorWithJustFullname(t *testing.T) {
 	rec, req, env := setupTestEnv(t, "PUT", "/projects/3", `{"fullname": "new-fullname"}`, "operator")
 	hu.ServeHandler(rec, req, http.HandlerFunc(env.projectsOneHandler), "/projects/{id}")
-	hu.ConfirmOKResponse(t, rec)
-
-	wanted := `{"success": true}`
-	hu.CheckResponse(t, rec, wanted)
+	hu.ConfirmNoContentResponse(t, rec)
 
 	// and verify state of database now
 	p, err := env.db.GetProjectByID(3)
@@ -182,10 +173,7 @@ func TestCannotPutProjectsOneHandlerAsCommenter(t *testing.T) {
 func TestCanDeleteProjectsOneHandlerAsAdmin(t *testing.T) {
 	rec, req, env := setupTestEnv(t, "DELETE", "/projects/3", ``, "admin")
 	hu.ServeHandler(rec, req, http.HandlerFunc(env.projectsOneHandler), "/projects/{id}")
-	hu.ConfirmOKResponse(t, rec)
-
-	wanted := `{"success": true}`
-	hu.CheckResponse(t, rec, wanted)
+	hu.ConfirmNoContentResponse(t, rec)
 
 	// and verify state of database now
 	projects, err := env.db.GetAllProjects()

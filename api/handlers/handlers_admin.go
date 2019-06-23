@@ -49,7 +49,7 @@ func (env *Env) adminDBHandler(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(w, `{"error": "Unable to reset database"}`)
 			return
 		}
-		fmt.Fprintf(w, `{"success": true}`)
+		w.WriteHeader(http.StatusNoContent)
 	default:
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprintf(w, `{"error": "Unknown command '%s'"}`, command)

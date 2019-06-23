@@ -201,7 +201,7 @@ func (env *Env) projectsOnePutHelper(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// success!
-	fmt.Fprintf(w, `{"success": true}`)
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (env *Env) projectsOneDeleteHelper(w http.ResponseWriter, r *http.Request) {
@@ -229,5 +229,5 @@ func (env *Env) projectsOneDeleteHelper(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// success!
-	fmt.Fprintf(w, `{"success": true}`)
+	w.WriteHeader(http.StatusNoContent)
 }

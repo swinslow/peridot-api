@@ -99,6 +99,28 @@ func ConfirmCreatedResponse(t *testing.T, rec *httptest.ResponseRecorder) {
 	}
 }
 
+// ConfirmNoContentResponse confirms that the handler returned an
+// No Content (204) response, that the header is set for JSON
+// content and that no content was actually returned in the body.
+func ConfirmNoContentResponse(t *testing.T, rec *httptest.ResponseRecorder) {
+	// check that we got a 204 (No Content)
+	if 204 != rec.Code {
+		t.Errorf("Expected %d, got %d", 204, rec.Code)
+	}
+
+	// check that content type was application/json
+	header := rec.Result().Header
+	if header.Get("Content-Type") != "application/json" {
+		t.Errorf("expected %v, got %v", "application/json", header.Get("Content-Type"))
+	}
+
+	// check that the body was empty
+	got := GetBody(t, rec)
+	if len(got) > 0 {
+		t.Errorf("expected no content for 204 response, got %v", string(got))
+	}
+}
+
 // ConfirmBadRequestResponse confirms that the handler returned a
 // Bad Request (400) response and that the header is set for JSON content.
 func ConfirmBadRequestResponse(t *testing.T, rec *httptest.ResponseRecorder) {

@@ -161,10 +161,7 @@ func TestCannotGetUsersOneHandlerAsBadUser(t *testing.T) {
 func TestCanPutUsersOneHandlerAsAdmin(t *testing.T) {
 	rec, req, env := setupTestEnv(t, "PUT", "/users/3", `{"name": "new-name", "github": "new-github", "access": "operator"}`, "admin")
 	hu.ServeHandler(rec, req, http.HandlerFunc(env.usersOneHandler), "/users/{id}")
-	hu.ConfirmOKResponse(t, rec)
-
-	wanted := `{"success": true}`
-	hu.CheckResponse(t, rec, wanted)
+	hu.ConfirmNoContentResponse(t, rec)
 
 	// and verify state of database now
 	u, err := env.db.GetUserByID(3)
@@ -180,10 +177,7 @@ func TestCanPutUsersOneHandlerAsAdmin(t *testing.T) {
 func TestCanPutUsersOneHandlerAsAdminWithJustName(t *testing.T) {
 	rec, req, env := setupTestEnv(t, "PUT", "/users/3", `{"name": "new-name"}`, "admin")
 	hu.ServeHandler(rec, req, http.HandlerFunc(env.usersOneHandler), "/users/{id}")
-	hu.ConfirmOKResponse(t, rec)
-
-	wanted := `{"success": true}`
-	hu.CheckResponse(t, rec, wanted)
+	hu.ConfirmNoContentResponse(t, rec)
 
 	// and verify state of database now
 	u, err := env.db.GetUserByID(3)
@@ -199,10 +193,7 @@ func TestCanPutUsersOneHandlerAsAdminWithJustName(t *testing.T) {
 func TestCanPutUsersOneHandlerAsAdminWithJustGithub(t *testing.T) {
 	rec, req, env := setupTestEnv(t, "PUT", "/users/3", `{"github": "new-github"}`, "admin")
 	hu.ServeHandler(rec, req, http.HandlerFunc(env.usersOneHandler), "/users/{id}")
-	hu.ConfirmOKResponse(t, rec)
-
-	wanted := `{"success": true}`
-	hu.CheckResponse(t, rec, wanted)
+	hu.ConfirmNoContentResponse(t, rec)
 
 	// and verify state of database now
 	u, err := env.db.GetUserByID(3)
@@ -218,10 +209,7 @@ func TestCanPutUsersOneHandlerAsAdminWithJustGithub(t *testing.T) {
 func TestCanPutUsersOneHandlerAsAdminWithJustAccessLevel(t *testing.T) {
 	rec, req, env := setupTestEnv(t, "PUT", "/users/3", `{"access": "operator"}`, "admin")
 	hu.ServeHandler(rec, req, http.HandlerFunc(env.usersOneHandler), "/users/{id}")
-	hu.ConfirmOKResponse(t, rec)
-
-	wanted := `{"success": true}`
-	hu.CheckResponse(t, rec, wanted)
+	hu.ConfirmNoContentResponse(t, rec)
 
 	// and verify state of database now
 	u, err := env.db.GetUserByID(3)
@@ -243,10 +231,7 @@ func TestCannotPutUsersOneHandlerAsAdminWithInvalidAccessLevel(t *testing.T) {
 func TestCanPutUsersOneHandlerAsOperatorSelfWithJustName(t *testing.T) {
 	rec, req, env := setupTestEnv(t, "PUT", "/users/2", `{"name": "new-operator-name"}`, "operator")
 	hu.ServeHandler(rec, req, http.HandlerFunc(env.usersOneHandler), "/users/{id}")
-	hu.ConfirmOKResponse(t, rec)
-
-	wanted := `{"success": true}`
-	hu.CheckResponse(t, rec, wanted)
+	hu.ConfirmNoContentResponse(t, rec)
 
 	// and verify state of database now
 	u, err := env.db.GetUserByID(2)
@@ -286,10 +271,7 @@ func TestCannotPutUsersOneHandlerAsOperatorForSelfOtherThanName(t *testing.T) {
 func TestCanPutUsersOneHandlerAsCommenterSelfWithJustName(t *testing.T) {
 	rec, req, env := setupTestEnv(t, "PUT", "/users/3", `{"name": "new-commenter-name"}`, "commenter")
 	hu.ServeHandler(rec, req, http.HandlerFunc(env.usersOneHandler), "/users/{id}")
-	hu.ConfirmOKResponse(t, rec)
-
-	wanted := `{"success": true}`
-	hu.CheckResponse(t, rec, wanted)
+	hu.ConfirmNoContentResponse(t, rec)
 
 	// and verify state of database now
 	u, err := env.db.GetUserByID(3)
@@ -329,10 +311,7 @@ func TestCannotPutUsersOneHandlerAsCommenterForSelfOtherThanName(t *testing.T) {
 func TestCanPutUsersOneHandlerAsViewerSelfWithJustName(t *testing.T) {
 	rec, req, env := setupTestEnv(t, "PUT", "/users/4", `{"name": "new-viewer-name"}`, "viewer")
 	hu.ServeHandler(rec, req, http.HandlerFunc(env.usersOneHandler), "/users/{id}")
-	hu.ConfirmOKResponse(t, rec)
-
-	wanted := `{"success": true}`
-	hu.CheckResponse(t, rec, wanted)
+	hu.ConfirmNoContentResponse(t, rec)
 
 	// and verify state of database now
 	u, err := env.db.GetUserByID(4)

@@ -316,5 +316,5 @@ func (env *Env) usersOnePutHelper(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// success!
-	fmt.Fprintf(w, `{"success": true}`)
+	w.WriteHeader(http.StatusNoContent)
 }

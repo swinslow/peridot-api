@@ -168,7 +168,7 @@ func TestCannotPutProjectsOneHandlerAsCommenter(t *testing.T) {
 	}
 }
 
-// ===== PUT /projects/3 =====
+// ===== DELETE /projects/3 =====
 
 func TestCanDeleteProjectsOneHandlerAsAdmin(t *testing.T) {
 	rec, req, env := setupTestEnv(t, "DELETE", "/projects/3", ``, "admin")

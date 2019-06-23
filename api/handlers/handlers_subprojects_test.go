@@ -151,3 +151,134 @@ func TestCannotPostSubprojectsSubHandlerAsBadUser(t *testing.T) {
 	hu.ServeHandler(rec, req, http.HandlerFunc(env.subprojectsSubHandler), "/projects/{id}/subprojects")
 	hu.ConfirmInvalidAuth(t, rec, ErrAuthGithub)
 }
+
+// ===== GET /subprojects/3 =====
+
+func TestCanGetSubprojectsOneHandlerAsViewer(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "GET", "/subprojects/3", "", "viewer")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.subprojectsOneHandler), "/subprojects/{id}")
+	hu.ConfirmOKResponse(t, rec)
+
+	wanted := `{"subproject": {"id": 3, "project_id": 1, "name": "subprj3", "fullname": "subproject 3"}}`
+	hu.CheckResponse(t, rec, wanted)
+}
+
+func TestCannotGetSubprojectsOneHandlerAsBadUser(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "GET", "/subprojects/3", ``, "disabled")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.subprojectsOneHandler), "/subprojects/{id}")
+	hu.ConfirmAccessDenied(t, rec)
+
+	rec, req, env = setupTestEnv(t, "GET", "/subprojects/3", ``, "invalid")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.subprojectsOneHandler), "/subprojects/{id}")
+	hu.ConfirmInvalidAuth(t, rec, ErrAuthGithub)
+}
+
+// ===== PUT /subprojects/3 =====
+
+func TestCanPutSubprojectsOneHandlerAsOperator(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "PUT", "/subprojects/3", `{"name": "new-name", "fullname": "new-fullname"}`, "operator")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.subprojectsOneHandler), "/subprojects/{id}")
+	hu.ConfirmNoContentResponse(t, rec)
+
+	// and verify state of database now
+	sp, err := env.db.GetSubprojectByID(3)
+	if err != nil {
+		t.Errorf("expected nil error, got %v", err)
+	}
+	wantedSubproject := &datastore.Subproject{ID: 3, ProjectID: 1, Name: "new-name", Fullname: "new-fullname"}
+	if sp.ID != wantedSubproject.ID || sp.ProjectID != wantedSubproject.ProjectID || sp.Name != wantedSubproject.Name || sp.Fullname != wantedSubproject.Fullname {
+		t.Errorf("expected %#v, got %#v", wantedSubproject, sp)
+	}
+}
+
+func TestCanPutSubprojectsOneHandlerAsOperatorWithJustName(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "PUT", "/subprojects/3", `{"name": "new-name"}`, "operator")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.subprojectsOneHandler), "/subprojects/{id}")
+	hu.ConfirmNoContentResponse(t, rec)
+
+	// and verify state of database now
+	sp, err := env.db.GetSubprojectByID(3)
+	if err != nil {
+		t.Errorf("expected nil error, got %v", err)
+	}
+	wantedSubproject := &datastore.Subproject{ID: 3, ProjectID: 1, Name: "new-name", Fullname: "subproject 3"}
+	if sp.ID != wantedSubproject.ID || sp.ProjectID != wantedSubproject.ProjectID || sp.Name != wantedSubproject.Name || sp.Fullname != wantedSubproject.Fullname {
+		t.Errorf("expected %#v, got %#v", wantedSubproject, sp)
+	}
+}
+
+func TestCanPutSubprojectsOneHandlerAsOperatorWithJustFullname(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "PUT", "/subprojects/3", `{"fullname": "new-fullname"}`, "operator")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.subprojectsOneHandler), "/subprojects/{id}")
+	hu.ConfirmNoContentResponse(t, rec)
+
+	// and verify state of database now
+	sp, err := env.db.GetSubprojectByID(3)
+	if err != nil {
+		t.Errorf("expected nil error, got %v", err)
+	}
+	wantedSubproject := &datastore.Subproject{ID: 3, ProjectID: 1, Name: "subprj3", Fullname: "new-fullname"}
+	if sp.ID != wantedSubproject.ID || sp.ProjectID != wantedSubproject.ProjectID || sp.Name != wantedSubproject.Name || sp.Fullname != wantedSubproject.Fullname {
+		t.Errorf("expected %#v, got %#v", wantedSubproject, sp)
+	}
+}
+
+func TestCannotSubputProjectsOneHandlerAsCommenter(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "PUT", "/subprojects/3", `{"name": "new-name", "fullname": "new-fullname"}`, "commenter")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.subprojectsOneHandler), "/subprojects/{id}")
+	hu.ConfirmAccessDenied(t, rec)
+
+	// and verify state of database now
+	sp, err := env.db.GetSubprojectByID(3)
+	if err != nil {
+		t.Errorf("expected nil error, got %v", err)
+	}
+	wantedSubproject := &datastore.Subproject{ID: 3, ProjectID: 1, Name: "subprj3", Fullname: "subproject 3"}
+	if sp.ID != wantedSubproject.ID || sp.ProjectID != wantedSubproject.ProjectID || sp.Name != wantedSubproject.Name || sp.Fullname != wantedSubproject.Fullname {
+		t.Errorf("expected %#v, got %#v", wantedSubproject, sp)
+	}
+}
+
+// ===== DELETE /projects/3 =====
+
+func TestCanDeleteSubprojectsOneHandlerAsAdmin(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "DELETE", "/subprojects/3", ``, "admin")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.subprojectsOneHandler), "/subprojects/{id}")
+	hu.ConfirmNoContentResponse(t, rec)
+
+	// and verify state of database now
+	subprojects, err := env.db.GetAllSubprojects()
+	if err != nil {
+		t.Errorf("expected nil error, got %v", err)
+	}
+	if len(subprojects) != 3 {
+		t.Errorf("expected %d, got %d", 3, len(subprojects))
+	}
+	sp, err := env.db.GetSubprojectByID(3)
+	if err == nil {
+		t.Fatalf("expected non-nil error, got nil and %#v", sp)
+	}
+}
+
+func TestCannotDeleteSubprojectsOneHandlerAsOperator(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "DELETE", "/subprojects/3", ``, "operator")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.subprojectsOneHandler), "/subprojects/{id}")
+	hu.ConfirmAccessDenied(t, rec)
+
+	// and verify state of database has not changed
+	subprojects, err := env.db.GetAllSubprojects()
+	if err != nil {
+		t.Errorf("expected nil error, got %v", err)
+	}
+	if len(subprojects) != 4 {
+		t.Errorf("expected %d, got %d", 4, len(subprojects))
+	}
+	sp, err := env.db.GetSubprojectByID(3)
+	if err != nil {
+		t.Errorf("expected nil error, got %v", err)
+	}
+	wantedSubproject := &datastore.Subproject{ID: 3, ProjectID: 1, Name: "subprj3", Fullname: "subproject 3"}
+	if sp.ID != wantedSubproject.ID || sp.ProjectID != wantedSubproject.ProjectID || sp.Name != wantedSubproject.Name || sp.Fullname != wantedSubproject.Fullname {
+		t.Errorf("expected %#v, got %#v", wantedSubproject, sp)
+	}
+}

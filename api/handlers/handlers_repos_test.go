@@ -80,3 +80,74 @@ func TestCannotPostReposHandlerAsBadUser(t *testing.T) {
 	hu.ServeHandler(rec, req, http.HandlerFunc(env.reposHandler), "/repos")
 	hu.ConfirmInvalidAuth(t, rec, ErrAuthGithub)
 }
+
+// ===== GET /subprojects/4/repos =====
+
+func TestCanGetReposSubHandler(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "GET", "/subprojects/4/repos", ``, "viewer")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.reposSubHandler), "/subprojects/{id}/repos")
+	hu.ConfirmOKResponse(t, rec)
+
+	wanted := `{"repos": [{"id": 2, "subproject_id": 4, "name": "repo2", "address": "https://example.com/repo2.git"},{"id": 3, "subproject_id": 4, "name": "repo3", "address": "https://example.com/repo3.git"},{"id": 4, "subproject_id": 4, "name": "repo4", "address": "https://example.com/repo4.git"}]}`
+	hu.CheckResponse(t, rec, wanted)
+}
+
+func TestCannotGetReposSubHandlerAsBadUser(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "GET", "/subprojects/4/repos", ``, "disabled")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.reposSubHandler), "/subprojects/{id}/repos")
+	hu.ConfirmAccessDenied(t, rec)
+
+	rec, req, env = setupTestEnv(t, "GET", "/subprojects/4/repos", ``, "invalid")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.reposSubHandler), "/subprojects/{id}/repos")
+	hu.ConfirmInvalidAuth(t, rec, ErrAuthGithub)
+}
+
+// ===== POST /subprojects/4/repos =====
+
+func TestCanPostReposSubHandlerAsOperator(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "POST", "/subprojects/4/repos", `{"name": "repo5", "address": "https://example.com/newrepo5.git"}`, "operator")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.reposSubHandler), "/subprojects/{id}/repos")
+	hu.ConfirmCreatedResponse(t, rec)
+
+	wanted := `{"id": 5}`
+	hu.CheckResponse(t, rec, wanted)
+
+	// and verify state of database now
+	repos, err := env.db.GetAllRepos()
+	if err != nil {
+		t.Errorf("expected nil error, got %v", err)
+	}
+	if len(repos) != 5 {
+		t.Errorf("expected %d, got %d", 5, len(repos))
+	}
+	newRepo, err := env.db.GetRepoByID(5)
+	if err != nil {
+		t.Fatalf("expected nil error, got %v", err)
+	}
+	wantedRepo := &datastore.Repo{ID: 5, SubprojectID: 4, Name: "repo5", Address: "https://example.com/newrepo5.git"}
+	if newRepo.ID != wantedRepo.ID || newRepo.Name != wantedRepo.Name || newRepo.Address != wantedRepo.Address {
+		t.Errorf("expected %#v, got %#v", wantedRepo, newRepo)
+	}
+}
+
+func TestCannotPostReposSubHandlerAsOtherUser(t *testing.T) {
+	// as commenter
+	rec, req, env := setupTestEnv(t, "POST", "/subprojects/4/repos", `{"name": "repo5", "address": "https://example.com/newrepo5.git"}`, "commenter")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.reposSubHandler), "/subprojects/{id}/repos")
+	hu.ConfirmAccessDenied(t, rec)
+
+	// as viewer
+	rec, req, env = setupTestEnv(t, "POST", "/subprojects/4/repos", `{"name": "repo5", "address": "https://example.com/newrepo5.git"}`, "viewer")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.reposSubHandler), "/subprojects/{id}/repos")
+	hu.ConfirmAccessDenied(t, rec)
+}
+
+func TestCannotPostReposSubHandlerAsBadUser(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "POST", "/subprojects/4/repos", `{"name": "repo5", "address": "https://example.com/newrepo5.git"}`, "disabled")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.reposSubHandler), "/subprojects/{id}/repos")
+	hu.ConfirmAccessDenied(t, rec)
+
+	rec, req, env = setupTestEnv(t, "POST", "/subprojects/4/repos", `{"name": "repo5", "address": "https://example.com/newrepo5.git"}`, "invalid")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.reposSubHandler), "/subprojects/{id}/repos")
+	hu.ConfirmInvalidAuth(t, rec, ErrAuthGithub)
+}

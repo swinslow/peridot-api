@@ -13,6 +13,7 @@ type mockDB struct {
 	mockUsers       []*datastore.User
 	mockProjects    []*datastore.Project
 	mockSubprojects []*datastore.Subproject
+	mockRepos       []*datastore.Repo
 }
 
 // createMockDB creates mock values for the handler tests to use.
@@ -38,6 +39,13 @@ func createMockDB() *mockDB {
 		&datastore.Subproject{ID: 2, ProjectID: 1, Name: "subprj2", Fullname: "subproject 2"},
 		&datastore.Subproject{ID: 3, ProjectID: 1, Name: "subprj3", Fullname: "subproject 3"},
 		&datastore.Subproject{ID: 4, ProjectID: 1, Name: "subprj4", Fullname: "subproject 4"},
+	}
+
+	mdb.mockRepos = []*datastore.Repo{
+		&datastore.Repo{ID: 1, SubprojectID: 2, Name: "repo1", Address: "https://example.com/repo1.git"},
+		&datastore.Repo{ID: 2, SubprojectID: 4, Name: "repo2", Address: "https://example.com/repo2.git"},
+		&datastore.Repo{ID: 3, SubprojectID: 4, Name: "repo3", Address: "https://example.com/repo3.git"},
+		&datastore.Repo{ID: 4, SubprojectID: 4, Name: "repo4", Address: "https://example.com/repo4.git"},
 	}
 
 	return mdb
@@ -263,14 +271,14 @@ func (mdb *mockDB) AddSubproject(projectID uint32, name string, fullname string)
 	// make sure project ID is valid
 	_, err := mdb.GetProjectByID(projectID)
 	if err != nil {
-		return 0, fmt.Errorf("Project found with ID %d", projectID)
+		return 0, fmt.Errorf("Project not found with ID %d", projectID)
 	}
 
 	// get max mock subproject ID
 	var maxID uint32
 	for _, sp := range mdb.mockSubprojects {
-		if sp.Name == name {
-			return 0, fmt.Errorf("Subproject with name %s already exists in database", name)
+		if sp.Name == name && sp.ProjectID == projectID {
+			return 0, fmt.Errorf("Subproject with name %s for project %d already exists in database", name, projectID)
 		}
 		if sp.ID > maxID {
 			maxID = sp.ID
@@ -317,7 +325,7 @@ func (mdb *mockDB) UpdateSubprojectProjectID(id uint32, newProjectID uint32) err
 	// make sure project ID is valid
 	_, err := mdb.GetProjectByID(newProjectID)
 	if err != nil {
-		return fmt.Errorf("Project found with ID %d", newProjectID)
+		return fmt.Errorf("Project not found with ID %d", newProjectID)
 	}
 
 	for _, sp := range mdb.mockSubprojects {
@@ -345,33 +353,70 @@ func (mdb *mockDB) DeleteSubproject(id uint32) error {
 		mdb.mockSubprojects = newMockSubprojects
 		return nil
 	}
-	return fmt.Errorf("Project not found with ID %d", id)
+	return fmt.Errorf("Subproject not found with ID %d", id)
 }
 
 // ===== Repos =====
 
 // GetAllRepos returns a slice of all repos in the database.
 func (mdb *mockDB) GetAllRepos() ([]*datastore.Repo, error) {
-	return []*datastore.Repo{}, nil
+	return mdb.mockRepos, nil
 }
 
 // GetAllReposForSubprojectID returns a slice of all repos in
 // the database for the given subproject ID.
 func (mdb *mockDB) GetAllReposForSubprojectID(subprojectID uint32) ([]*datastore.Repo, error) {
-	return []*datastore.Repo{}, nil
+	repos := []*datastore.Repo{}
+	for _, repo := range mdb.mockRepos {
+		if repo.SubprojectID == subprojectID {
+			repos = append(repos, repo)
+		}
+	}
+	return repos, nil
 }
 
 // GetRepoByID returns the Repo with the given ID, or nil
 // and an error if not found.
 func (mdb *mockDB) GetRepoByID(id uint32) (*datastore.Repo, error) {
-	return nil, nil
+	for _, repo := range mdb.mockRepos {
+		if repo.ID == id {
+			return repo, nil
+		}
+	}
+	return nil, fmt.Errorf("Repo not found with ID %d", id)
 }
 
 // AddRepo adds a new repo with the given name and address,
 // referencing the designated Subproject. It returns the new
 // repo's ID on success or an error if failing.
 func (mdb *mockDB) AddRepo(subprojectID uint32, name string, address string) (uint32, error) {
-	return 0, nil
+	// make sure subproject ID is valid
+	_, err := mdb.GetSubprojectByID(subprojectID)
+	if err != nil {
+		return 0, fmt.Errorf("Subproject not found with ID %d", subprojectID)
+	}
+
+	// get max mock repo ID
+	var maxID uint32
+	for _, repo := range mdb.mockRepos {
+		if repo.Name == name && repo.SubprojectID == subprojectID {
+			return 0, fmt.Errorf("Repo with name %s for subproject %d already exists in database", name, subprojectID)
+		}
+		if repo.ID > maxID {
+			maxID = repo.ID
+		}
+	}
+
+	newID := maxID + 1
+	repo := &datastore.Repo{
+		ID:           newID,
+		SubprojectID: subprojectID,
+		Name:         name,
+		Address:      address,
+	}
+
+	mdb.mockRepos = append(mdb.mockRepos, repo)
+	return newID, nil
 }
 
 // UpdateRepo updates an existing Repo with the given ID,
@@ -379,20 +424,57 @@ func (mdb *mockDB) AddRepo(subprojectID uint32, name string, address string) (ui
 // string is passed, the existing value will remain unchanged.
 // It returns nil on success or an error if failing.
 func (mdb *mockDB) UpdateRepo(id uint32, newName string, newAddress string) error {
-	return nil
+	for _, repo := range mdb.mockRepos {
+		if repo.ID == id {
+			if newName != "" {
+				repo.Name = newName
+			}
+			if newAddress != "" {
+				repo.Address = newAddress
+			}
+
+			return nil
+		}
+	}
+	return fmt.Errorf("Repo not found with ID %d", id)
 }
 
 // UpdateRepoSubprojectID updates an existing Repo with the
 // given ID, changing its corresponding Subproject ID.
 // It returns nil on success or an error if failing.
 func (mdb *mockDB) UpdateRepoSubprojectID(id uint32, newSubprojectID uint32) error {
-	return nil
+	// make sure subproject ID is valid
+	_, err := mdb.GetSubprojectByID(newSubprojectID)
+	if err != nil {
+		return fmt.Errorf("Subproject not found with ID %d", newSubprojectID)
+	}
+
+	for _, repo := range mdb.mockRepos {
+		if repo.ID == id {
+			repo.SubprojectID = newSubprojectID
+			return nil
+		}
+	}
+	return fmt.Errorf("Repo not found with ID %d", id)
 }
 
 // DeleteRepo deletes an existing Repo with the given ID.
 // It returns nil on success or an error if failing.
 func (mdb *mockDB) DeleteRepo(id uint32) error {
-	return nil
+	found := false
+	newMockRepos := []*datastore.Repo{}
+	for _, repo := range mdb.mockRepos {
+		if repo.ID == id {
+			found = true
+		} else {
+			newMockRepos = append(newMockRepos, repo)
+		}
+	}
+	if found {
+		mdb.mockRepos = newMockRepos
+		return nil
+	}
+	return fmt.Errorf("Repo not found with ID %d", id)
 }
 
 // ===== RepoBranches =====

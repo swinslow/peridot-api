@@ -32,4 +32,8 @@ func (env *Env) RegisterHandlers(router *mux.Router) {
 	// /subprojects -- subproject data
 	router.HandleFunc("/subprojects", env.validateTokenMiddleware(env.subprojectsHandler)).Methods("GET", "POST")
 	router.HandleFunc("/subprojects/{id:[0-9]+}", env.validateTokenMiddleware(env.subprojectsOneHandler)).Methods("GET", "PUT", "DELETE")
+
+	// /repos -- repo data
+	router.HandleFunc("/repos", env.validateTokenMiddleware(env.reposHandler)).Methods("GET", "POST")
+
 }

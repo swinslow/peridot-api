@@ -32,13 +32,13 @@ func (env *Env) adminDBHandler(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&js)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, `{"success": false, "error": "Invalid JSON request"}`)
+		fmt.Fprintf(w, `{"error": "Invalid JSON request"}`)
 		return
 	}
 	command, ok := js["command"]
 	if !ok {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, `{"success": false, "error": "No command specified"}`)
+		fmt.Fprintf(w, `{"error": "No command specified"}`)
 		return
 	}
 	switch command {
@@ -46,13 +46,13 @@ func (env *Env) adminDBHandler(w http.ResponseWriter, r *http.Request) {
 		err = env.db.ResetDB()
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			fmt.Fprintf(w, `{"success": false, "error": "Unable to reset database"}`)
+			fmt.Fprintf(w, `{"error": "Unable to reset database"}`)
 			return
 		}
 		fmt.Fprintf(w, `{"success": true}`)
 	default:
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, `{"success": false, "error": "Unknown command '%s'"}`, command)
+		fmt.Fprintf(w, `{"error": "Unknown command '%s'"}`, command)
 		return
 	}
 

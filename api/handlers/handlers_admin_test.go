@@ -32,7 +32,7 @@ func TestAdminDBRequiresJSON(t *testing.T) {
 	hu.ServeHandler(rec, req, http.HandlerFunc(env.adminDBHandler), "/admin/db")
 	hu.ConfirmBadRequestResponse(t, rec)
 
-	wanted := `{"success": false, "error": "Invalid JSON request"}`
+	wanted := `{"error": "Invalid JSON request"}`
 	hu.CheckResponse(t, rec, wanted)
 }
 
@@ -41,7 +41,7 @@ func TestAdminDBRequiresCommand(t *testing.T) {
 	hu.ServeHandler(rec, req, http.HandlerFunc(env.adminDBHandler), "/admin/db")
 	hu.ConfirmBadRequestResponse(t, rec)
 
-	wanted := `{"success": false, "error": "No command specified"}`
+	wanted := `{"error": "No command specified"}`
 	hu.CheckResponse(t, rec, wanted)
 }
 
@@ -50,7 +50,7 @@ func TestAdminDBRequiresKnownCommand(t *testing.T) {
 	hu.ServeHandler(rec, req, http.HandlerFunc(env.adminDBHandler), "/admin/db")
 	hu.ConfirmBadRequestResponse(t, rec)
 
-	wanted := `{"success": false, "error": "Unknown command 'oops'"}`
+	wanted := `{"error": "Unknown command 'oops'"}`
 	hu.CheckResponse(t, rec, wanted)
 }
 func TestCannotClearDBUnlessAdmin(t *testing.T) {

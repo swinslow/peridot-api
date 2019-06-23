@@ -62,7 +62,7 @@ func TestCanPostUsersHandlerAsAdmin(t *testing.T) {
 	hu.ServeHandler(rec, req, http.HandlerFunc(env.usersHandler), "/users")
 	hu.ConfirmCreatedResponse(t, rec)
 
-	wanted := `{"success": true, "id": 11}`
+	wanted := `{"id": 11}`
 	hu.CheckResponse(t, rec, wanted)
 
 	// and verify state of database now
@@ -108,13 +108,13 @@ func TestCanGetUsersOneHandlerAsAdmin(t *testing.T) {
 	hu.ConfirmOKResponse(t, rec)
 
 	// expect full user data b/c we're an admin
-	wanted := `{"success": true, "user": {"id": 3, "name": "Commenter", "github": "commenter", "access": "commenter"}}`
+	wanted := `{"user": {"id": 3, "name": "Commenter", "github": "commenter", "access": "commenter"}}`
 	hu.CheckResponse(t, rec, wanted)
 }
 
 func TestCanGetUsersOneHandlerAsOtherUsers(t *testing.T) {
 	// should be same return for all EXCEPT self
-	wanted := `{"success": true, "user": {"id": 3, "github": "commenter"}}`
+	wanted := `{"user": {"id": 3, "github": "commenter"}}`
 
 	// as operator
 	rec, req, env := setupTestEnv(t, "GET", "/users/3", "", "operator")
@@ -129,7 +129,7 @@ func TestCanGetUsersOneHandlerAsOtherUsers(t *testing.T) {
 	hu.CheckResponse(t, rec, wanted)
 
 	// and for commenter getting somebody else's data
-	wanted = `{"success": true, "user": {"id": 1, "github": "admin"}}`
+	wanted = `{"user": {"id": 1, "github": "admin"}}`
 	rec, req, env = setupTestEnv(t, "GET", "/users/1", "", "commenter")
 	hu.ServeHandler(rec, req, http.HandlerFunc(env.usersOneHandler), "/users/{id}")
 	hu.ConfirmOKResponse(t, rec)
@@ -142,7 +142,7 @@ func TestCanGetUsersOneHandlerAsSelf(t *testing.T) {
 	hu.ConfirmOKResponse(t, rec)
 
 	// expect full user data b/c we're getting our own data
-	wanted := `{"success": true, "user": {"id": 3, "name": "Commenter", "github": "commenter", "access": "commenter"}}`
+	wanted := `{"user": {"id": 3, "name": "Commenter", "github": "commenter", "access": "commenter"}}`
 	hu.CheckResponse(t, rec, wanted)
 }
 

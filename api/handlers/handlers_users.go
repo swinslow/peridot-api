@@ -96,7 +96,7 @@ func (env *Env) usersPostHelper(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&js)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, `{"success": false, "error": "Invalid JSON request"}`)
+		fmt.Fprintf(w, `{"error": "Invalid JSON request"}`)
 		return
 	}
 
@@ -104,19 +104,19 @@ func (env *Env) usersPostHelper(w http.ResponseWriter, r *http.Request) {
 	name, ok := js["name"]
 	if !ok {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, `{"success": false, "error": "Missing required value for 'name'"}`)
+		fmt.Fprintf(w, `{"error": "Missing required value for 'name'"}`)
 		return
 	}
 	ghUsername, ok := js["github"]
 	if !ok {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, `{"success": false, "error": "Missing required value for 'github'"}`)
+		fmt.Fprintf(w, `{"error": "Missing required value for 'github'"}`)
 		return
 	}
 	access, ok := js["access"]
 	if !ok {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, `{"success": false, "error": "Missing required value for 'access'"}`)
+		fmt.Fprintf(w, `{"error": "Missing required value for 'access'"}`)
 		return
 	}
 
@@ -124,7 +124,7 @@ func (env *Env) usersPostHelper(w http.ResponseWriter, r *http.Request) {
 	ual, err := datastore.UserAccessLevelFromString(access)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, `{"success": false, "error": "Invalid value for 'access'"}`)
+		fmt.Fprintf(w, `{"error": "Invalid value for 'access'"}`)
 		return
 	}
 
@@ -135,7 +135,7 @@ func (env *Env) usersPostHelper(w http.ResponseWriter, r *http.Request) {
 	users, err := env.db.GetAllUsers()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(w, `{"success": false, "error": "Error in user database"}`)
+		fmt.Fprintf(w, `{"error": "Error in user database"}`)
 		return
 	}
 	var maxCurrentUserID uint32
@@ -150,13 +150,13 @@ func (env *Env) usersPostHelper(w http.ResponseWriter, r *http.Request) {
 	err = env.db.AddUser(newID, name, ghUsername, ual)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(w, `{"success": false, "error": "Unable to create user"}`)
+		fmt.Fprintf(w, `{"error": "Unable to create user"}`)
 		return
 	}
 
 	// success!
 	w.WriteHeader(http.StatusCreated)
-	fmt.Fprintf(w, `{"success": true, "id": %d}`, newID)
+	fmt.Fprintf(w, `{"id": %d}`, newID)
 }
 
 func (env *Env) usersOneHandler(w http.ResponseWriter, r *http.Request) {
@@ -187,14 +187,14 @@ func (env *Env) usersOneGetHelper(w http.ResponseWriter, r *http.Request) {
 	userID, err := extractIDasU32(r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, `{"success": false, "error": "Missing or invalid ID"}`)
+		fmt.Fprintf(w, `{"error": "Missing or invalid ID"}`)
 		return
 	}
 
 	// get user from database
 	argUser, err := env.db.GetUserByID(userID)
 	if err != nil {
-		fmt.Fprintf(w, `{"success": false, "error": "Database retrieval error"}`)
+		fmt.Fprintf(w, `{"error": "Database retrieval error"}`)
 		return
 	}
 
@@ -204,12 +204,11 @@ func (env *Env) usersOneGetHelper(w http.ResponseWriter, r *http.Request) {
 		// admin user just does full JSON marshalling
 		// create map so we return a JSON object
 		jsData := struct {
-			Success bool            `json:"success"`
-			User    *datastore.User `json:"user"`
-		}{Success: true, User: argUser}
+			User *datastore.User `json:"user"`
+		}{User: argUser}
 		js, err := json.Marshal(jsData)
 		if err != nil {
-			fmt.Fprintf(w, `{"success": false, "error": "JSON marshalling error"}`)
+			fmt.Fprintf(w, `{"error": "JSON marshalling error"}`)
 			return
 		}
 		w.Write(js)
@@ -219,12 +218,11 @@ func (env *Env) usersOneGetHelper(w http.ResponseWriter, r *http.Request) {
 	// for non-admin, non-self recipient, need to return just id
 	// and Github username
 	jsData := struct {
-		Success bool         `json:"success"`
 		LtdUser *limitedUser `json:"user"`
-	}{Success: true, LtdUser: &limitedUser{ID: argUser.ID, Github: argUser.Github}}
+	}{LtdUser: &limitedUser{ID: argUser.ID, Github: argUser.Github}}
 	js, err := json.Marshal(jsData)
 	if err != nil {
-		fmt.Fprintf(w, `{"success": false, "error": "JSON marshalling error"}`)
+		fmt.Fprintf(w, `{"error": "JSON marshalling error"}`)
 		return
 	}
 	w.Write(js)
@@ -242,14 +240,14 @@ func (env *Env) usersOnePutHelper(w http.ResponseWriter, r *http.Request) {
 	userID, err := extractIDasU32(r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, `{"success": false, "error": "Missing or invalid ID"}`)
+		fmt.Fprintf(w, `{"error": "Missing or invalid ID"}`)
 		return
 	}
 
 	// if not admin and not self, access will be denied
 	if user.AccessLevel != datastore.AccessAdmin && user.ID != userID {
 		w.WriteHeader(http.StatusForbidden)
-		fmt.Fprintf(w, `{"success": false, "error": "Access denied"}`)
+		fmt.Fprintf(w, `{"error": "Access denied"}`)
 		return
 	}
 
@@ -257,7 +255,7 @@ func (env *Env) usersOnePutHelper(w http.ResponseWriter, r *http.Request) {
 	existingUser, err := env.db.GetUserByID(userID)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprintf(w, `{"success": false, "error": "Unknown user ID"}`)
+		fmt.Fprintf(w, `{"error": "Unknown user ID"}`)
 		return
 	}
 
@@ -266,7 +264,7 @@ func (env *Env) usersOnePutHelper(w http.ResponseWriter, r *http.Request) {
 	err = json.NewDecoder(r.Body).Decode(&js)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, `{"success": false, "error": "Invalid JSON request"}`)
+		fmt.Fprintf(w, `{"error": "Invalid JSON request"}`)
 		return
 	}
 
@@ -280,7 +278,7 @@ func (env *Env) usersOnePutHelper(w http.ResponseWriter, r *http.Request) {
 		// unless we're admin, access will be denied
 		if user.AccessLevel != datastore.AccessAdmin {
 			w.WriteHeader(http.StatusForbidden)
-			fmt.Fprintf(w, `{"success": false, "error": "Access denied"}`)
+			fmt.Fprintf(w, `{"error": "Access denied"}`)
 			return
 		}
 	} else {
@@ -292,13 +290,13 @@ func (env *Env) usersOnePutHelper(w http.ResponseWriter, r *http.Request) {
 		// unless we're admin, access will be denied
 		if user.AccessLevel != datastore.AccessAdmin {
 			w.WriteHeader(http.StatusForbidden)
-			fmt.Fprintf(w, `{"success": false, "error": "Access denied"}`)
+			fmt.Fprintf(w, `{"error": "Access denied"}`)
 			return
 		}
 		newUal, err = datastore.UserAccessLevelFromString(newAccess)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			fmt.Fprintf(w, `{"success": false, "error": "Invalid value for 'access'"}`)
+			fmt.Fprintf(w, `{"error": "Invalid value for 'access'"}`)
 			return
 		}
 	} else {
@@ -313,7 +311,7 @@ func (env *Env) usersOnePutHelper(w http.ResponseWriter, r *http.Request) {
 	}
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(w, `{"success": false, "error": "Unable to update user"}`)
+		fmt.Fprintf(w, `{"error": "Unable to update user"}`)
 		return
 	}
 

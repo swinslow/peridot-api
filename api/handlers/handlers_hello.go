@@ -17,5 +17,5 @@ func (env *Env) helloHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprintf(w, `{"success": true, "message": "hello"}`)
+	fmt.Fprintf(w, `{"message": "hello"}`)
 }

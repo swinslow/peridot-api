@@ -65,7 +65,7 @@ func (env *Env) projectsPostHelper(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&js)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, `{"success": false, "error": "Invalid JSON request"}`)
+		fmt.Fprintf(w, `{"error": "Invalid JSON request"}`)
 		return
 	}
 
@@ -73,13 +73,13 @@ func (env *Env) projectsPostHelper(w http.ResponseWriter, r *http.Request) {
 	name, ok := js["name"]
 	if !ok {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, `{"success": false, "error": "Missing required value for 'name'"}`)
+		fmt.Fprintf(w, `{"error": "Missing required value for 'name'"}`)
 		return
 	}
 	fullname, ok := js["fullname"]
 	if !ok {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, `{"success": false, "error": "Missing required value for 'fullname'"}`)
+		fmt.Fprintf(w, `{"error": "Missing required value for 'fullname'"}`)
 		return
 	}
 
@@ -87,13 +87,13 @@ func (env *Env) projectsPostHelper(w http.ResponseWriter, r *http.Request) {
 	newID, err := env.db.AddProject(name, fullname)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(w, `{"success": false, "error": "Unable to create project"}`)
+		fmt.Fprintf(w, `{"error": "Unable to create project"}`)
 		return
 	}
 
 	// success!
 	w.WriteHeader(http.StatusCreated)
-	fmt.Fprintf(w, `{"success": true, "id": %d}`, newID)
+	fmt.Fprintf(w, `{"id": %d}`, newID)
 }
 
 func (env *Env) projectsOneHandler(w http.ResponseWriter, r *http.Request) {
@@ -126,25 +126,24 @@ func (env *Env) projectsOneGetHelper(w http.ResponseWriter, r *http.Request) {
 	projectID, err := extractIDasU32(r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, `{"success": false, "error": "Missing or invalid ID"}`)
+		fmt.Fprintf(w, `{"error": "Missing or invalid ID"}`)
 		return
 	}
 
 	// get project from database
 	argProject, err := env.db.GetProjectByID(projectID)
 	if err != nil {
-		fmt.Fprintf(w, `{"success": false, "error": "Database retrieval error"}`)
+		fmt.Fprintf(w, `{"error": "Database retrieval error"}`)
 		return
 	}
 
 	// create map so we return a JSON object
 	jsData := struct {
-		Success bool               `json:"success"`
 		Project *datastore.Project `json:"project"`
-	}{Success: true, Project: argProject}
+	}{Project: argProject}
 	js, err := json.Marshal(jsData)
 	if err != nil {
-		fmt.Fprintf(w, `{"success": false, "error": "JSON marshalling error"}`)
+		fmt.Fprintf(w, `{"error": "JSON marshalling error"}`)
 		return
 	}
 	w.Write(js)
@@ -162,7 +161,7 @@ func (env *Env) projectsOnePutHelper(w http.ResponseWriter, r *http.Request) {
 	projectID, err := extractIDasU32(r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, `{"success": false, "error": "Missing or invalid ID"}`)
+		fmt.Fprintf(w, `{"error": "Missing or invalid ID"}`)
 		return
 	}
 
@@ -170,7 +169,7 @@ func (env *Env) projectsOnePutHelper(w http.ResponseWriter, r *http.Request) {
 	project, err := env.db.GetProjectByID(projectID)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprintf(w, `{"success": false, "error": "Unknown project ID"}`)
+		fmt.Fprintf(w, `{"error": "Unknown project ID"}`)
 		return
 	}
 
@@ -179,7 +178,7 @@ func (env *Env) projectsOnePutHelper(w http.ResponseWriter, r *http.Request) {
 	err = json.NewDecoder(r.Body).Decode(&js)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, `{"success": false, "error": "Invalid JSON request"}`)
+		fmt.Fprintf(w, `{"error": "Invalid JSON request"}`)
 		return
 	}
 
@@ -197,7 +196,7 @@ func (env *Env) projectsOnePutHelper(w http.ResponseWriter, r *http.Request) {
 	err = env.db.UpdateProject(projectID, newName, newFullname)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(w, `{"success": false, "error": "Unable to update project"}`)
+		fmt.Fprintf(w, `{"error": "Unable to update project"}`)
 		return
 	}
 
@@ -217,7 +216,7 @@ func (env *Env) projectsOneDeleteHelper(w http.ResponseWriter, r *http.Request) 
 	projectID, err := extractIDasU32(r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, `{"success": false, "error": "Missing or invalid ID"}`)
+		fmt.Fprintf(w, `{"error": "Missing or invalid ID"}`)
 		return
 	}
 
@@ -225,7 +224,7 @@ func (env *Env) projectsOneDeleteHelper(w http.ResponseWriter, r *http.Request) 
 	err = env.db.DeleteProject(projectID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(w, `{"success": false, "error": "Unable to delete project"}`)
+		fmt.Fprintf(w, `{"error": "Unable to delete project"}`)
 		return
 	}
 

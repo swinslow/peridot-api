@@ -38,7 +38,7 @@ func TestCanPostSubprojectsHandlerAsOperator(t *testing.T) {
 	hu.ServeHandler(rec, req, http.HandlerFunc(env.subprojectsHandler), "/subprojects")
 	hu.ConfirmCreatedResponse(t, rec)
 
-	wanted := `{"success": true, "id": 5}`
+	wanted := `{"id": 5}`
 	hu.CheckResponse(t, rec, wanted)
 
 	// and verify state of database now

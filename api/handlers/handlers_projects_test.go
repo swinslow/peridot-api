@@ -38,7 +38,7 @@ func TestCanPostProjectsHandlerAsOperator(t *testing.T) {
 	hu.ServeHandler(rec, req, http.HandlerFunc(env.projectsHandler), "/projects")
 	hu.ConfirmCreatedResponse(t, rec)
 
-	wanted := `{"success": true, "id": 4}`
+	wanted := `{"id": 4}`
 	hu.CheckResponse(t, rec, wanted)
 
 	// and verify state of database now
@@ -88,7 +88,7 @@ func TestCanGetProjectsOneHandlerAsViewer(t *testing.T) {
 	hu.ServeHandler(rec, req, http.HandlerFunc(env.projectsOneHandler), "/projects/{id}")
 	hu.ConfirmOKResponse(t, rec)
 
-	wanted := `{"success": true, "project": {"id": 3, "name": "prj3", "fullname": "project 3"}}`
+	wanted := `{"project": {"id": 3, "name": "prj3", "fullname": "project 3"}}`
 	hu.CheckResponse(t, rec, wanted)
 }
 

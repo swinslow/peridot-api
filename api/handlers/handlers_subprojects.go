@@ -65,7 +65,7 @@ func (env *Env) subprojectsPostHelper(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&js)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, `{"success": false, "error": "Invalid JSON request"}`)
+		fmt.Fprintf(w, `{"error": "Invalid JSON request"}`)
 		return
 	}
 
@@ -73,19 +73,19 @@ func (env *Env) subprojectsPostHelper(w http.ResponseWriter, r *http.Request) {
 	projectIDf, ok := js["project_id"]
 	if !ok {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, `{"success": false, "error": "Missing required value for 'project_id'"}`)
+		fmt.Fprintf(w, `{"error": "Missing required value for 'project_id'"}`)
 		return
 	}
 	name, ok := js["name"]
 	if !ok {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, `{"success": false, "error": "Missing required value for 'name'"}`)
+		fmt.Fprintf(w, `{"error": "Missing required value for 'name'"}`)
 		return
 	}
 	fullname, ok := js["fullname"]
 	if !ok {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, `{"success": false, "error": "Missing required value for 'fullname'"}`)
+		fmt.Fprintf(w, `{"error": "Missing required value for 'fullname'"}`)
 		return
 	}
 
@@ -96,11 +96,11 @@ func (env *Env) subprojectsPostHelper(w http.ResponseWriter, r *http.Request) {
 	newID, err := env.db.AddSubproject(projectID, name.(string), fullname.(string))
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(w, `{"success": false, "error": "Unable to create subproject"}`)
+		fmt.Fprintf(w, `{"error": "Unable to create subproject"}`)
 		return
 	}
 
 	// success!
 	w.WriteHeader(http.StatusCreated)
-	fmt.Fprintf(w, `{"success": true, "id": %d}`, newID)
+	fmt.Fprintf(w, `{"id": %d}`, newID)
 }

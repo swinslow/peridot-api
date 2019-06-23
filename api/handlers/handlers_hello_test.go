@@ -36,7 +36,7 @@ func TestCanGetHelloHandler(t *testing.T) {
 	}
 
 	// check that the correct JSON strings were returned
-	wanted := `{"message": "hello", "success": true}`
+	wanted := `{"message": "hello"}`
 	got := hu.GetBody(t, rec)
 	hu.CheckMatch(t, wanted, got, true)
 }

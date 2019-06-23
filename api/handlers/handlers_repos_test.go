@@ -151,3 +151,134 @@ func TestCannotPostReposSubHandlerAsBadUser(t *testing.T) {
 	hu.ServeHandler(rec, req, http.HandlerFunc(env.reposSubHandler), "/subprojects/{id}/repos")
 	hu.ConfirmInvalidAuth(t, rec, ErrAuthGithub)
 }
+
+// ===== GET /repos/3 =====
+
+func TestCanGetReposOneHandlerAsViewer(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "GET", "/repos/3", "", "viewer")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.reposOneHandler), "/repos/{id}")
+	hu.ConfirmOKResponse(t, rec)
+
+	wanted := `{"repo": {"id": 3, "subproject_id": 4, "name": "repo3", "address": "https://example.com/repo3.git"}}`
+	hu.CheckResponse(t, rec, wanted)
+}
+
+func TestCannotGetReposOneHandlerAsBadUser(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "GET", "/repos/3", ``, "disabled")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.reposOneHandler), "/repos/{id}")
+	hu.ConfirmAccessDenied(t, rec)
+
+	rec, req, env = setupTestEnv(t, "GET", "/repos/3", ``, "invalid")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.reposOneHandler), "/repos/{id}")
+	hu.ConfirmInvalidAuth(t, rec, ErrAuthGithub)
+}
+
+// ===== PUT /repos/3 =====
+
+func TestCanPutReposOneHandlerAsOperator(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "PUT", "/repos/3", `{"name": "new-name", "address": "https://example.com/new-name.git"}`, "operator")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.reposOneHandler), "/repos/{id}")
+	hu.ConfirmNoContentResponse(t, rec)
+
+	// and verify state of database now
+	repo, err := env.db.GetRepoByID(3)
+	if err != nil {
+		t.Errorf("expected nil error, got %v", err)
+	}
+	wantedRepo := &datastore.Repo{ID: 3, SubprojectID: 4, Name: "new-name", Address: "https://example.com/new-name.git"}
+	if repo.ID != wantedRepo.ID || repo.SubprojectID != wantedRepo.SubprojectID || repo.Name != wantedRepo.Name || repo.Address != wantedRepo.Address {
+		t.Errorf("expected %#v, got %#v", wantedRepo, repo)
+	}
+}
+
+func TestCanPutReposOneHandlerAsOperatorWithJustName(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "PUT", "/repos/3", `{"name": "new-name"}`, "operator")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.reposOneHandler), "/repos/{id}")
+	hu.ConfirmNoContentResponse(t, rec)
+
+	// and verify state of database now
+	repo, err := env.db.GetRepoByID(3)
+	if err != nil {
+		t.Errorf("expected nil error, got %v", err)
+	}
+	wantedRepo := &datastore.Repo{ID: 3, SubprojectID: 4, Name: "new-name", Address: "https://example.com/repo3.git"}
+	if repo.ID != wantedRepo.ID || repo.SubprojectID != wantedRepo.SubprojectID || repo.Name != wantedRepo.Name || repo.Address != wantedRepo.Address {
+		t.Errorf("expected %#v, got %#v", wantedRepo, repo)
+	}
+}
+
+func TestCanPutReposOneHandlerAsOperatorWithJustFullname(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "PUT", "/repos/3", `{"address": "https://example.com/newRepo3.git"}`, "operator")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.reposOneHandler), "/repos/{id}")
+	hu.ConfirmNoContentResponse(t, rec)
+
+	// and verify state of database now
+	repo, err := env.db.GetRepoByID(3)
+	if err != nil {
+		t.Errorf("expected nil error, got %v", err)
+	}
+	wantedRepo := &datastore.Repo{ID: 3, SubprojectID: 4, Name: "repo3", Address: "https://example.com/newRepo3.git"}
+	if repo.ID != wantedRepo.ID || repo.SubprojectID != wantedRepo.SubprojectID || repo.Name != wantedRepo.Name || repo.Address != wantedRepo.Address {
+		t.Errorf("expected %#v, got %#v", wantedRepo, repo)
+	}
+}
+
+func TestCannotPutReposOneHandlerAsCommenter(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "PUT", "/repos/3", `{"name": "new-name", "address": "https://example.com/new-name.git"}`, "commenter")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.reposOneHandler), "/repos/{id}")
+	hu.ConfirmAccessDenied(t, rec)
+
+	// and verify state of database now
+	repo, err := env.db.GetRepoByID(3)
+	if err != nil {
+		t.Errorf("expected nil error, got %v", err)
+	}
+	wantedRepo := &datastore.Repo{ID: 3, SubprojectID: 4, Name: "repo3", Address: "https://example.com/repo3.git"}
+	if repo.ID != wantedRepo.ID || repo.SubprojectID != wantedRepo.SubprojectID || repo.Name != wantedRepo.Name || repo.Address != wantedRepo.Address {
+		t.Errorf("expected %#v, got %#v", wantedRepo, repo)
+	}
+}
+
+// ===== DELETE /repos/3 =====
+
+func TestCanDeleteReposOneHandlerAsAdmin(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "DELETE", "/repos/3", ``, "admin")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.reposOneHandler), "/repos/{id}")
+	hu.ConfirmNoContentResponse(t, rec)
+
+	// and verify state of database now
+	repos, err := env.db.GetAllRepos()
+	if err != nil {
+		t.Errorf("expected nil error, got %v", err)
+	}
+	if len(repos) != 3 {
+		t.Errorf("expected %d, got %d", 3, len(repos))
+	}
+	repo, err := env.db.GetRepoByID(3)
+	if err == nil {
+		t.Fatalf("expected non-nil error, got nil and %#v", repo)
+	}
+}
+
+func TestCannotDeleteReposOneHandlerAsOperator(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "DELETE", "/repos/3", ``, "operator")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.reposOneHandler), "/repos/{id}")
+	hu.ConfirmAccessDenied(t, rec)
+
+	// and verify state of database has not changed
+	repos, err := env.db.GetAllRepos()
+	if err != nil {
+		t.Errorf("expected nil error, got %v", err)
+	}
+	if len(repos) != 4 {
+		t.Errorf("expected %d, got %d", 4, len(repos))
+	}
+	repo, err := env.db.GetRepoByID(3)
+	if err != nil {
+		t.Errorf("expected nil error, got %v", err)
+	}
+	wantedRepo := &datastore.Repo{ID: 3, SubprojectID: 4, Name: "repo3", Address: "https://example.com/repo3.git"}
+	if repo.ID != wantedRepo.ID || repo.SubprojectID != wantedRepo.SubprojectID || repo.Name != wantedRepo.Name || repo.Address != wantedRepo.Address {
+		t.Errorf("expected %#v, got %#v", wantedRepo, repo)
+	}
+}

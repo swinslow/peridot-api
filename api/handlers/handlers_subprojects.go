@@ -339,7 +339,7 @@ func (env *Env) subprojectsOneDeleteHelper(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	// delete the project
+	// delete the subproject
 	err = env.db.DeleteSubproject(subprojectID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)

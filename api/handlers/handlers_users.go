@@ -6,9 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
 
-	"github.com/gorilla/mux"
 	"github.com/swinslow/peridot-api/internal/datastore"
 )
 
@@ -186,20 +184,12 @@ func (env *Env) usersOneGetHelper(w http.ResponseWriter, r *http.Request) {
 
 	// sufficient access
 	// extract ID for request
-	vars := mux.Vars(r)
-	id, ok := vars["id"]
-	if !ok {
-		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, `{"success": false, "error": "Missing or invalid user ID"}`)
-		return
-	}
-	u, err := strconv.ParseUint(id, 10, 32)
+	userID, err := extractIDasU32(r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, `{"success": false, "error": "Invalid user ID"}`)
+		fmt.Fprintf(w, `{"success": false, "error": "Missing or invalid ID"}`)
 		return
 	}
-	userID := uint32(u)
 
 	// get user from database
 	argUser, err := env.db.GetUserByID(userID)
@@ -249,20 +239,12 @@ func (env *Env) usersOnePutHelper(w http.ResponseWriter, r *http.Request) {
 
 	// sufficient access generally, but maybe not for the requested user?
 	// extract ID for request
-	vars := mux.Vars(r)
-	id, ok := vars["id"]
-	if !ok {
-		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, `{"success": false, "error": "Missing or invalid user ID"}`)
-		return
-	}
-	u, err := strconv.ParseUint(id, 10, 32)
+	userID, err := extractIDasU32(r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, `{"success": false, "error": "Invalid user ID"}`)
+		fmt.Fprintf(w, `{"success": false, "error": "Missing or invalid ID"}`)
 		return
 	}
-	userID := uint32(u)
 
 	// if not admin and not self, access will be denied
 	if user.AccessLevel != datastore.AccessAdmin && user.ID != userID {

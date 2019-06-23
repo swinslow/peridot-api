@@ -6,9 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
 
-	"github.com/gorilla/mux"
 	"github.com/swinslow/peridot-api/internal/datastore"
 )
 
@@ -125,20 +123,12 @@ func (env *Env) projectsOneGetHelper(w http.ResponseWriter, r *http.Request) {
 
 	// sufficient access
 	// extract ID for request
-	vars := mux.Vars(r)
-	id, ok := vars["id"]
-	if !ok {
-		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, `{"success": false, "error": "Missing or invalid project ID"}`)
-		return
-	}
-	p, err := strconv.ParseUint(id, 10, 32)
+	projectID, err := extractIDasU32(r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, `{"success": false, "error": "Invalid project ID"}`)
+		fmt.Fprintf(w, `{"success": false, "error": "Missing or invalid ID"}`)
 		return
 	}
-	projectID := uint32(p)
 
 	// get project from database
 	argProject, err := env.db.GetProjectByID(projectID)
@@ -169,20 +159,12 @@ func (env *Env) projectsOnePutHelper(w http.ResponseWriter, r *http.Request) {
 
 	// sufficient access
 	// extract ID for request
-	vars := mux.Vars(r)
-	id, ok := vars["id"]
-	if !ok {
-		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, `{"success": false, "error": "Missing or invalid project ID"}`)
-		return
-	}
-	p, err := strconv.ParseUint(id, 10, 32)
+	projectID, err := extractIDasU32(r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, `{"success": false, "error": "Invalid project ID"}`)
+		fmt.Fprintf(w, `{"success": false, "error": "Missing or invalid ID"}`)
 		return
 	}
-	projectID := uint32(p)
 
 	// get existing project from database
 	project, err := env.db.GetProjectByID(projectID)
@@ -232,20 +214,12 @@ func (env *Env) projectsOneDeleteHelper(w http.ResponseWriter, r *http.Request) 
 
 	// sufficient access
 	// extract ID for request
-	vars := mux.Vars(r)
-	id, ok := vars["id"]
-	if !ok {
-		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, `{"success": false, "error": "Missing or invalid project ID"}`)
-		return
-	}
-	p, err := strconv.ParseUint(id, 10, 32)
+	projectID, err := extractIDasU32(r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, `{"success": false, "error": "Invalid project ID"}`)
+		fmt.Fprintf(w, `{"success": false, "error": "Missing or invalid ID"}`)
 		return
 	}
-	projectID := uint32(p)
 
 	// delete the project
 	err = env.db.DeleteProject(projectID)

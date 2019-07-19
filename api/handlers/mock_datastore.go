@@ -562,10 +562,19 @@ func (mdb *mockDB) GetRepoPullByID(id uint32) (*datastore.RepoPull, error) {
 }
 
 // AddRepoPull adds a new repo pull as specified,
-// referencing the designated Repo, branch and other data.
-// It returns the new repo pull's ID on success or an
+// referencing the designated Repo, branch and other data,
+// filling in nil start/finish times and output, and
+// default startup status / health. It returns the new
+// repo pull's ID on success or an error if failing.
+func (mdb *mockDB) AddRepoPull(repoID uint32, branch string, commit string, tag string, spdxID string) (uint32, error) {
+	return 0, nil
+}
+
+// AddFullRepoPull adds a new repo pull with full specified
+// data, referencing the designated Repo, branch and other
+// data. It returns the new repo pull's ID on success or an
 // error if failing.
-func (mdb *mockDB) AddRepoPull(repoID uint32, branch string, pulledAt time.Time, commit string, tag string, spdxID string) (uint32, error) {
+func (mdb *mockDB) AddFullRepoPull(repoID uint32, branch string, startedAt time.Time, finishedAt time.Time, status datastore.Status, health datastore.Health, output string, commit string, tag string, spdxID string) (uint32, error) {
 	return 0, nil
 }
 

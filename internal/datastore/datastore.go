@@ -132,10 +132,16 @@ type Datastore interface {
 	// or nil and an error if not found.
 	GetRepoPullByID(id uint32) (*RepoPull, error)
 	// AddRepoPull adds a new repo pull as specified,
-	// referencing the designated Repo, branch and other data.
-	// It returns the new repo pull's ID on success or an
+	// referencing the designated Repo, branch and other data,
+	// filling in nil start/finish times and output, and
+	// default startup status / health. It returns the new
+	// repo pull's ID on success or an error if failing.
+	AddRepoPull(repoID uint32, branch string, commit string, tag string, spdxID string) (uint32, error)
+	// AddFullRepoPull adds a new repo pull with full specified
+	// data, referencing the designated Repo, branch and other
+	// data. It returns the new repo pull's ID on success or an
 	// error if failing.
-	AddRepoPull(repoID uint32, branch string, pulledAt time.Time, commit string, tag string, spdxID string) (uint32, error)
+	AddFullRepoPull(repoID uint32, branch string, startedAt time.Time, finishedAt time.Time, status Status, health Health, output string, commit string, tag string, spdxID string) (uint32, error)
 	// DeleteRepoPull deletes an existing RepoPull with the
 	// given ID. It returns nil on success or an error if
 	// failing.

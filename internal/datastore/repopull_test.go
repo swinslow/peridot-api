@@ -20,9 +20,20 @@ func TestShouldGetAllRepoPullsForOneRepoBranch(t *testing.T) {
 	defer sqldb.Close()
 	db := DB{sqldb: sqldb}
 
-	t11 := time.Date(2019, 5, 2, 13, 53, 41, 671764, time.UTC)
-	t15 := time.Date(2019, 5, 4, 12, 0, 0, 0, time.UTC)
-	t16 := time.Date(2019, 5, 5, 12, 0, 0, 0, time.UTC)
+	sa11 := time.Date(2019, 5, 2, 13, 53, 41, 671764, time.UTC)
+	fa11 := time.Date(2019, 5, 2, 13, 54, 17, 386417, time.UTC)
+	st11 := StatusStopped
+	h11 := HealthOK
+
+	sa15 := time.Date(2019, 5, 4, 12, 0, 0, 0, time.UTC)
+	fa15 := time.Date(2019, 5, 4, 12, 0, 1, 0, time.UTC)
+	st15 := StatusStopped
+	h15 := HealthDegraded
+
+	sa16 := time.Date(2019, 5, 5, 12, 0, 0, 0, time.UTC)
+	fa16 := time.Time{}
+	st16 := StatusRunning
+	h16 := HealthOK
 
 	c11 := "0123456789012345678901234567890123456789"
 	c15 := "4567890123456789012345678901234567890123"
@@ -32,11 +43,11 @@ func TestShouldGetAllRepoPullsForOneRepoBranch(t *testing.T) {
 	spdxID15 := "SPDXRef-xyzzy-15"
 	spdxID16 := "SPDXRef-xyzzy-16"
 
-	sentRows := sqlmock.NewRows([]string{"id", "repo_id", "branch", "pulled_at", "commit", "tag", "spdx_id"}).
-		AddRow(11, 3, "dev-1.1", t11, c11, "", spdxID11).
-		AddRow(15, 3, "dev-1.1", t15, c15, "v1.1-rc0", spdxID15).
-		AddRow(16, 3, "dev-1.1", t16, c16, "v1.1-rc1", spdxID16)
-	mock.ExpectQuery(`SELECT id, repo_id, branch, pulled_at, commit, tag, spdx_id FROM peridot.repo_pulls WHERE repo_id = \$1 AND branch = \$2 ORDER BY id`).
+	sentRows := sqlmock.NewRows([]string{"id", "repo_id", "branch", "started_at", "finished_at", "status", "health", "output", "commit", "tag", "spdx_id"}).
+		AddRow(11, 3, "dev-1.1", sa11, fa11, st11, h11, "output message 11", c11, "", spdxID11).
+		AddRow(15, 3, "dev-1.1", sa15, fa15, st15, h15, "output message 15", c15, "v1.1-rc0", spdxID15).
+		AddRow(16, 3, "dev-1.1", sa16, fa16, st16, h16, "output message 16", c16, "v1.1-rc1", spdxID16)
+	mock.ExpectQuery(`SELECT id, repo_id, branch, started_at, finished_at, status, health, output, commit, tag, spdx_id FROM peridot.repo_pulls WHERE repo_id = \$1 AND branch = \$2 ORDER BY id`).
 		WillReturnRows(sentRows)
 
 	// run the tested function
@@ -65,8 +76,20 @@ func TestShouldGetAllRepoPullsForOneRepoBranch(t *testing.T) {
 	if rp0.Branch != "dev-1.1" {
 		t.Errorf("expected %v, got %v", "dev-1.1", rp0.Branch)
 	}
-	if rp0.PulledAt != t11 {
-		t.Errorf("expected %v, got %v", t11, rp0.PulledAt)
+	if rp0.StartedAt != sa11 {
+		t.Errorf("expected %v, got %v", sa11, rp0.StartedAt)
+	}
+	if rp0.FinishedAt != fa11 {
+		t.Errorf("expected %v, got %v", fa11, rp0.FinishedAt)
+	}
+	if rp0.Status != st11 {
+		t.Errorf("expected %v, got %v", st11, rp0.Status)
+	}
+	if rp0.Health != h11 {
+		t.Errorf("expected %v, got %v", h11, rp0.Health)
+	}
+	if rp0.Output != "output message 11" {
+		t.Errorf("expected %v, got %v", "output message 11", rp0.Output)
 	}
 	if rp0.Commit != c11 {
 		t.Errorf("expected %v, got %v", c11, rp0.Commit)
@@ -87,8 +110,20 @@ func TestShouldGetAllRepoPullsForOneRepoBranch(t *testing.T) {
 	if rp2.Branch != "dev-1.1" {
 		t.Errorf("expected %v, got %v", "dev-1.1", rp2.Branch)
 	}
-	if rp2.PulledAt != t16 {
-		t.Errorf("expected %v, got %v", t16, rp2.PulledAt)
+	if rp2.StartedAt != sa16 {
+		t.Errorf("expected %v, got %v", sa16, rp2.StartedAt)
+	}
+	if rp2.FinishedAt != fa16 {
+		t.Errorf("expected %v, got %v", fa16, rp2.FinishedAt)
+	}
+	if rp2.Status != st16 {
+		t.Errorf("expected %v, got %v", st16, rp2.Status)
+	}
+	if rp2.Health != h16 {
+		t.Errorf("expected %v, got %v", h16, rp2.Health)
+	}
+	if rp2.Output != "output message 16" {
+		t.Errorf("expected %v, got %v", "output message 16", rp2.Output)
 	}
 	if rp2.Commit != c16 {
 		t.Errorf("expected %v, got %v", c16, rp2.Commit)
@@ -110,13 +145,16 @@ func TestShouldGetRepoPullByID(t *testing.T) {
 	defer sqldb.Close()
 	db := DB{sqldb: sqldb}
 
-	t15 := time.Date(2019, 5, 4, 12, 0, 0, 0, time.UTC)
+	sa15 := time.Date(2019, 5, 4, 12, 0, 0, 0, time.UTC)
+	fa15 := time.Date(2019, 5, 4, 12, 0, 1, 0, time.UTC)
+	st15 := StatusStopped
+	h15 := HealthDegraded
 	c15 := "4567890123456789012345678901234567890123"
 	spdxID15 := "SPDXRef-xyzzy-15"
 
-	sentRows := sqlmock.NewRows([]string{"id", "repo_id", "branch", "pulled_at", "commit", "tag", "spdx_id"}).
-		AddRow(15, 3, "dev-1.1", t15, c15, "v1.1-rc0", spdxID15)
-	mock.ExpectQuery(`[SELECT id, repo_id, branch, pulled_at, commit, tag, spdx_id FROM peridot.repo_pulls WHERE id = \$1]`).
+	sentRows := sqlmock.NewRows([]string{"id", "repo_id", "branch", "started_at", "finished_at", "status", "health", "output", "commit", "tag", "spdx_id"}).
+		AddRow(15, 3, "dev-1.1", sa15, fa15, st15, h15, "output message 15", c15, "v1.1-rc0", spdxID15)
+	mock.ExpectQuery(`[SELECT id, repo_id, branch, started_at, finished_at, status, health, output, commit, tag, spdx_id FROM peridot.repo_pulls WHERE id = \$1]`).
 		WithArgs(15).
 		WillReturnRows(sentRows)
 
@@ -142,8 +180,20 @@ func TestShouldGetRepoPullByID(t *testing.T) {
 	if rp.Branch != "dev-1.1" {
 		t.Errorf("expected %v, got %v", "dev-1.1", rp.Branch)
 	}
-	if rp.PulledAt != t15 {
-		t.Errorf("expected %v, got %v", t15, rp.PulledAt)
+	if rp.StartedAt != sa15 {
+		t.Errorf("expected %v, got %v", sa15, rp.StartedAt)
+	}
+	if rp.FinishedAt != fa15 {
+		t.Errorf("expected %v, got %v", fa15, rp.FinishedAt)
+	}
+	if rp.Status != st15 {
+		t.Errorf("expected %v, got %v", st15, rp.Status)
+	}
+	if rp.Health != h15 {
+		t.Errorf("expected %v, got %v", h15, rp.Health)
+	}
+	if rp.Output != "output message 15" {
+		t.Errorf("expected %v, got %v", "output message 15", rp.Output)
 	}
 	if rp.Commit != c15 {
 		t.Errorf("expected %v, got %v", c15, rp.Commit)
@@ -165,7 +215,7 @@ func TestShouldFailGetRepoPullByIDForUnknownID(t *testing.T) {
 	defer sqldb.Close()
 	db := DB{sqldb: sqldb}
 
-	mock.ExpectQuery(`[SELECT id, repo_id, branch, pulled_at, commit, tag, spdx_id FROM peridot.repo_pulls WHERE id = \$1]`).
+	mock.ExpectQuery(`[SELECT id, repo_id, branch, started_at, finished_at, status, health, output, commit, tag, spdx_id FROM peridot.repo_pulls WHERE id = \$1]`).
 		WithArgs(413).
 		WillReturnRows(sqlmock.NewRows([]string{}))
 
@@ -194,19 +244,20 @@ func TestShouldAddRepoPull(t *testing.T) {
 	defer sqldb.Close()
 	db := DB{sqldb: sqldb}
 
-	t15 := time.Date(2019, 5, 4, 12, 0, 0, 0, time.UTC)
+	// adding without full means we will assume no times or output
+	// and startup status / OK health
 	c15 := "4567890123456789012345678901234567890123"
 	spdxID15 := "SPDXRef-xyzzy-15"
 
-	regexStmt := `[INSERT INTO peridot.repo_pulls(repo_id, branch, pulled_at, commit, tag, spdx_id) VALUES (\$1, \$2, \$3, \$4, \$5, \$6) RETURNING id]`
+	regexStmt := `[INSERT INTO peridot.repo_pulls(repo_id, branch, started_at, finished_at, status, health, output, commit, tag, spdx_id) VALUES (\$1, \$2, \$3, \$4, \$5, \$6, \$7, \$8, \$9, \$10) RETURNING id]`
 	mock.ExpectPrepare(regexStmt)
 	stmt := "INSERT INTO peridot.repo_pulls"
 	mock.ExpectQuery(stmt).
-		WithArgs(15, "master", t15, c15, "v1.15-rc0", spdxID15).
+		WithArgs(15, "master", time.Time{}, time.Time{}, StatusStartup, HealthOK, "", c15, "v1.15-rc0", spdxID15).
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(36))
 
 	// run the tested function
-	rpID, err := db.AddRepoPull(15, "master", t15, c15, "v1.15-rc0", spdxID15)
+	rpID, err := db.AddRepoPull(15, "master", c15, "v1.15-rc0", spdxID15)
 	if err != nil {
 		t.Fatalf("expected nil error, got %v", err)
 	}
@@ -232,19 +283,104 @@ func TestShouldFailAddRepoPullWithUnknownRepoBranch(t *testing.T) {
 	defer sqldb.Close()
 	db := DB{sqldb: sqldb}
 
-	t0 := time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC)
 	c0 := "4567890123456789012345678901234567890123"
 	spdxID0 := "SPDXRef-oops"
 
-	regexStmt := `[INSERT INTO peridot.repo_pulls(repo_id, branch, pulled_at, commit, tag, spdx_id) VALUES (\$1, \$2, \$3, \$4, \$5, \$6) RETURNING id]`
+	regexStmt := `[INSERT INTO peridot.repo_pulls(repo_id, branch, started_at, finished_at, status, health, output, commit, tag, spdx_id) VALUES (\$1, \$2, \$3, \$4, \$5, \$6, \$7, \$8, \$9, \$10) RETURNING id]`
 	mock.ExpectPrepare(regexStmt)
 	stmt := "INSERT INTO peridot.repo_pulls"
 	mock.ExpectQuery(stmt).
-		WithArgs(413, "unknown-branch", t0, c0, "", spdxID0).
+		WithArgs(413, "unknown-branch", time.Time{}, time.Time{}, StatusStartup, HealthOK, "", c0, "", spdxID0).
 		WillReturnError(fmt.Errorf("pq: insert or update on table \"peridot.repo_pulls\" violates foreign key constraint \"peridot.repo_pulls_repo_id_fkey\""))
 
 	// run the tested function
-	_, err = db.AddRepoPull(413, "unknown-branch", t0, c0, "", spdxID0)
+	_, err = db.AddRepoPull(413, "unknown-branch", c0, "", spdxID0)
+	if err == nil {
+		t.Fatalf("expected non-nil error, got nil")
+	}
+
+	// check sqlmock expectations
+	err = mock.ExpectationsWereMet()
+	if err != nil {
+		t.Errorf("unfulfilled expectations: %v", err)
+	}
+}
+
+func TestShouldAddFullRepoPull(t *testing.T) {
+	// set up mock
+	sqldb, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("got error when creating db mock: %v", err)
+	}
+	defer sqldb.Close()
+	db := DB{sqldb: sqldb}
+
+	// adding full means all values are given
+	repoID := uint32(15)
+	branch := "master"
+	sa := time.Date(2019, 5, 4, 12, 0, 0, 0, time.UTC)
+	fa := time.Date(2019, 5, 4, 12, 0, 1, 30, time.UTC)
+	status := StatusStopped
+	health := HealthOK
+	output := "pull complete"
+	commit := "4567890123456789012345678901234567890123"
+	tag := "v1.15-rc0"
+	spdxID := "SPDXRef-xyzzy-15"
+
+	regexStmt := `[INSERT INTO peridot.repo_pulls(repo_id, branch, started_at, finished_at, status, health, output, commit, tag, spdx_id) VALUES (\$1, \$2, \$3, \$4, \$5, \$6, \$7, \$8, \$9, \$10) RETURNING id]`
+	mock.ExpectPrepare(regexStmt)
+	stmt := "INSERT INTO peridot.repo_pulls"
+	mock.ExpectQuery(stmt).
+		WithArgs(repoID, branch, sa, fa, status, health, output, commit, tag, spdxID).
+		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(36))
+
+	// run the tested function
+	rpID, err := db.AddFullRepoPull(repoID, branch, sa, fa, status, health, output, commit, tag, spdxID)
+	if err != nil {
+		t.Fatalf("expected nil error, got %v", err)
+	}
+
+	// check sqlmock expectations
+	err = mock.ExpectationsWereMet()
+	if err != nil {
+		t.Errorf("unfulfilled expectations: %v", err)
+	}
+
+	// check returned value
+	if rpID != 36 {
+		t.Errorf("expected %v, got %v", 36, rpID)
+	}
+}
+
+func TestShouldFailAddFullRepoPullWithUnknownRepoBranch(t *testing.T) {
+	// set up mock
+	sqldb, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("got error when creating db mock: %v", err)
+	}
+	defer sqldb.Close()
+	db := DB{sqldb: sqldb}
+
+	repoID := uint32(413)
+	branch := "unknown-branch"
+	sa := time.Date(2019, 5, 4, 12, 0, 0, 0, time.UTC)
+	fa := time.Date(2019, 5, 4, 12, 0, 1, 30, time.UTC)
+	status := StatusStopped
+	health := HealthOK
+	output := "pull complete"
+	commit := "4567890123456789012345678901234567890123"
+	tag := "v1.15-rc0"
+	spdxID := "SPDXRef-oops"
+
+	regexStmt := `[INSERT INTO peridot.repo_pulls(repo_id, branch, started_at, finished_at, status, health, output, commit, tag, spdx_id) VALUES (\$1, \$2, \$3, \$4, \$5, \$6, \$7, \$8, \$9, \$10) RETURNING id]`
+	mock.ExpectPrepare(regexStmt)
+	stmt := "INSERT INTO peridot.repo_pulls"
+	mock.ExpectQuery(stmt).
+		WithArgs(repoID, branch, sa, fa, status, health, output, commit, tag, spdxID).
+		WillReturnError(fmt.Errorf("pq: insert or update on table \"peridot.repo_pulls\" violates foreign key constraint \"peridot.repo_pulls_repo_id_fkey\""))
+
+	// run the tested function
+	_, err = db.AddFullRepoPull(repoID, branch, sa, fa, status, health, output, commit, tag, spdxID)
 	if err == nil {
 		t.Fatalf("expected non-nil error, got nil")
 	}
@@ -317,13 +453,17 @@ func TestShouldFailDeleteRepoPullWithUnknownID(t *testing.T) {
 // ===== JSON marshalling and unmarshalling =====
 func TestCanMarshalRepoPullToJSON(t *testing.T) {
 	rp := &RepoPull{
-		ID:       17,
-		RepoID:   5,
-		Branch:   "master",
-		PulledAt: time.Date(2019, 5, 2, 13, 53, 41, 0, time.UTC),
-		Commit:   "0123456789012345678901234567890123456789",
-		Tag:      "v1.12-rc3",
-		SPDXID:   "SPDXRef-xyzzy-5",
+		ID:         17,
+		RepoID:     5,
+		Branch:     "master",
+		StartedAt:  time.Date(2019, 5, 2, 13, 53, 41, 0, time.UTC),
+		FinishedAt: time.Date(2019, 5, 2, 13, 54, 0, 0, time.UTC),
+		Status:     StatusStopped,
+		Health:     HealthOK,
+		Output:     "completed successfully",
+		Commit:     "0123456789012345678901234567890123456789",
+		Tag:        "v1.12-rc3",
+		SPDXID:     "SPDXRef-xyzzy-5",
 	}
 
 	js, err := json.Marshal(rp)
@@ -351,8 +491,20 @@ func TestCanMarshalRepoPullToJSON(t *testing.T) {
 	if rp.Branch != mGot["branch"].(string) {
 		t.Errorf("expected %v, got %v", rp.Branch, mGot["branch"].(string))
 	}
-	if rp.PulledAt.Format(time.RFC3339) != mGot["pulled_at"].(string) {
-		t.Errorf("expected %v, got %v", rp.PulledAt.Format(time.RFC3339), mGot["pulled_at"].(string))
+	if rp.StartedAt.Format(time.RFC3339) != mGot["started_at"].(string) {
+		t.Errorf("expected %v, got %v", rp.StartedAt.Format(time.RFC3339), mGot["started_at"].(string))
+	}
+	if rp.FinishedAt.Format(time.RFC3339) != mGot["finished_at"].(string) {
+		t.Errorf("expected %v, got %v", rp.FinishedAt.Format(time.RFC3339), mGot["finished_at"].(string))
+	}
+	if StringFromStatus(rp.Status) != mGot["status"].(string) {
+		t.Errorf("expected %v, got %v", StringFromStatus(rp.Status), mGot["status"].(string))
+	}
+	if StringFromHealth(rp.Health) != mGot["health"].(string) {
+		t.Errorf("expected %v, got %v", StringFromHealth(rp.Health), mGot["health"].(string))
+	}
+	if rp.Output != mGot["output"].(string) {
+		t.Errorf("expected %v, got %v", rp.Output, mGot["output"].(string))
 	}
 	if rp.Commit != mGot["commit"].(string) {
 		t.Errorf("expected %v, got %v", rp.Commit, mGot["commit"].(string))
@@ -367,7 +519,7 @@ func TestCanMarshalRepoPullToJSON(t *testing.T) {
 
 func TestCanUnmarshalRepoPullFromJSON(t *testing.T) {
 	rp := &RepoPull{}
-	js := []byte(`{"id":17, "repo_id":1, "branch":"dev", "pulled_at":"2019-01-02T15:04:05Z", "commit":"4567890123456789012345678901234567890123", "tag":"t7", "spdx_id":"SPDXRef-xyzzy-17"}`)
+	js := []byte(`{"id":17, "repo_id":1, "branch":"dev", "started_at":"2019-01-02T15:04:05Z", "finished_at":"2019-01-02T15:05:00Z", "status":"stopped", "health":"ok", "output":"completed successfully", "commit":"4567890123456789012345678901234567890123", "tag":"t7", "spdx_id":"SPDXRef-xyzzy-17"}`)
 
 	err := json.Unmarshal(js, rp)
 	if err != nil {
@@ -384,8 +536,20 @@ func TestCanUnmarshalRepoPullFromJSON(t *testing.T) {
 	if rp.Branch != "dev" {
 		t.Errorf("expected %v, got %v", "dev", rp.Branch)
 	}
-	if rp.PulledAt.Format(time.RFC3339) != "2019-01-02T15:04:05Z" {
-		t.Errorf("expected %v, got %v", "2019-01-02T15:04:05Z", rp.PulledAt.Format(time.RFC3339))
+	if rp.StartedAt.Format(time.RFC3339) != "2019-01-02T15:04:05Z" {
+		t.Errorf("expected %v, got %v", "2019-01-02T15:04:05Z", rp.StartedAt.Format(time.RFC3339))
+	}
+	if rp.FinishedAt.Format(time.RFC3339) != "2019-01-02T15:05:00Z" {
+		t.Errorf("expected %v, got %v", "2019-01-02T15:05:00Z", rp.FinishedAt.Format(time.RFC3339))
+	}
+	if StringFromStatus(rp.Status) != "stopped" {
+		t.Errorf("expected %v, got %v", "stopped", StringFromStatus(rp.Status))
+	}
+	if StringFromHealth(rp.Health) != "ok" {
+		t.Errorf("expected %v, got %v", "ok", StringFromHealth(rp.Health))
+	}
+	if rp.Output != "completed successfully" {
+		t.Errorf("expected %v, got %v", "completed successfully", rp.Output)
 	}
 	if rp.Commit != "4567890123456789012345678901234567890123" {
 		t.Errorf("expected %v, got %v", "4567890123456789012345678901234567890123", rp.Commit)
@@ -401,7 +565,7 @@ func TestCanUnmarshalRepoPullFromJSON(t *testing.T) {
 
 func TestCannotUnmarshalRepoPullWithNegativeIDFromJSON(t *testing.T) {
 	rp := &RepoPull{}
-	js := []byte(`{"id":-9283, "repo_id":1, "branch":"dev", "pulled_at":"2019-01-02T15:04:05Z", "commit":"4567890123456789012345678901234567890123", "tag":"t7", "spdx_id":"SPDXRef-xyzzy-17"}`)
+	js := []byte(`{"id":-9283, "repo_id":1, "branch":"dev", "started_at":"2019-01-02T15:04:05Z", "finished_at":"2019-01-02T15:05:00Z", "status":"stopped", "health":"ok", "output":"completed successfully", "commit":"4567890123456789012345678901234567890123", "tag":"t7", "spdx_id":"SPDXRef-xyzzy-17"}`)
 
 	err := json.Unmarshal(js, rp)
 	if err == nil {

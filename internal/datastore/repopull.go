@@ -20,9 +20,20 @@ type RepoPull struct {
 	RepoID uint32 `json:"repo_id"`
 	// Branch is the branch name within this repo.
 	Branch string `json:"branch"`
-	// PulledAt is when the code was pulled for this pull.
-	// Should be zero value if code has not yet been pulled.
-	PulledAt time.Time `json:"pulled_at"`
+	// StartedAt is when peridot began pulling code for this
+	// pull. Should be zero value if code pull has not yet
+	// been started.
+	StartedAt time.Time `json:"started_at"`
+	// FinishedAt is when peridot finished pulling code for
+	// this pull. Should be zero value if code pull has not
+	// yet been completed (or will not complete due to error).
+	FinishedAt time.Time `json:"finished_at,omitempty"`
+	// Status is the run status of the pull.
+	Status Status `json:"status"`
+	// Health is the health of the pull.
+	Health Health `json:"health"`
+	// Output is any output or error messages from the pull.
+	Output string `json:"output,omitempty"`
 	// Commit is the git commit hash for this pull.
 	Commit string `json:"commit"`
 	// Tag is the git tag, if any, for this pull. Should
@@ -36,7 +47,7 @@ type RepoPull struct {
 // GetAllRepoPullsForRepoBranch returns a slice of all repo
 // pulls in the database for the given Repo ID and branch.
 func (db *DB) GetAllRepoPullsForRepoBranch(repoID uint32, branch string) ([]*RepoPull, error) {
-	rows, err := db.sqldb.Query("SELECT id, repo_id, branch, pulled_at, commit, tag, spdx_id FROM peridot.repo_pulls WHERE repo_id = $1 AND branch = $2 ORDER BY id", repoID, branch)
+	rows, err := db.sqldb.Query("SELECT id, repo_id, branch, started_at, finished_at, status, health, output, commit, tag, spdx_id FROM peridot.repo_pulls WHERE repo_id = $1 AND branch = $2 ORDER BY id", repoID, branch)
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +56,7 @@ func (db *DB) GetAllRepoPullsForRepoBranch(repoID uint32, branch string) ([]*Rep
 	rps := []*RepoPull{}
 	for rows.Next() {
 		rp := &RepoPull{}
-		err := rows.Scan(&rp.ID, &rp.RepoID, &rp.Branch, &rp.PulledAt, &rp.Commit, &rp.Tag, &rp.SPDXID)
+		err := rows.Scan(&rp.ID, &rp.RepoID, &rp.Branch, &rp.StartedAt, &rp.FinishedAt, &rp.Status, &rp.Health, &rp.Output, &rp.Commit, &rp.Tag, &rp.SPDXID)
 		if err != nil {
 			return nil, err
 		}
@@ -62,8 +73,8 @@ func (db *DB) GetAllRepoPullsForRepoBranch(repoID uint32, branch string) ([]*Rep
 // or nil and an error if not found.
 func (db *DB) GetRepoPullByID(id uint32) (*RepoPull, error) {
 	var rp RepoPull
-	err := db.sqldb.QueryRow("SELECT id, repo_id, branch, pulled_at, commit, tag, spdx_id FROM peridot.repo_pulls WHERE id = $1", id).
-		Scan(&rp.ID, &rp.RepoID, &rp.Branch, &rp.PulledAt, &rp.Commit, &rp.Tag, &rp.SPDXID)
+	err := db.sqldb.QueryRow("SELECT id, repo_id, branch, started_at, finished_at, status, health, output, commit, tag, spdx_id FROM peridot.repo_pulls WHERE id = $1", id).
+		Scan(&rp.ID, &rp.RepoID, &rp.Branch, &rp.StartedAt, &rp.FinishedAt, &rp.Status, &rp.Health, &rp.Output, &rp.Commit, &rp.Tag, &rp.SPDXID)
 	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("no repo pull found with ID %v", id)
 	}
@@ -75,18 +86,27 @@ func (db *DB) GetRepoPullByID(id uint32) (*RepoPull, error) {
 }
 
 // AddRepoPull adds a new repo pull as specified,
-// referencing the designated Repo, branch and other data.
-// It returns the new repo pull's ID on success or an
+// referencing the designated Repo, branch and other data,
+// filling in nil start/finish times and output, and
+// default startup status / health. It returns the new
+// repo pull's ID on success or an error if failing.
+func (db *DB) AddRepoPull(repoID uint32, branch string, commit string, tag string, spdxID string) (uint32, error) {
+	return db.AddFullRepoPull(repoID, branch, time.Time{}, time.Time{}, StatusStartup, HealthOK, "", commit, tag, spdxID)
+}
+
+// AddFullRepoPull adds a new repo pull with full specified
+// data, referencing the designated Repo, branch and other
+// data. It returns the new repo pull's ID on success or an
 // error if failing.
-func (db *DB) AddRepoPull(repoID uint32, branch string, pulledAt time.Time, commit string, tag string, spdxID string) (uint32, error) {
+func (db *DB) AddFullRepoPull(repoID uint32, branch string, startedAt time.Time, finishedAt time.Time, status Status, health Health, output string, commit string, tag string, spdxID string) (uint32, error) {
 	// FIXME consider whether to move out into one-time-prepared statement
-	stmt, err := db.sqldb.Prepare("INSERT INTO peridot.repo_pulls(repo_id, branch, pulled_at, commit, tag, spdx_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id")
+	stmt, err := db.sqldb.Prepare("INSERT INTO peridot.repo_pulls(repo_id, branch, started_at, finished_at, status, health, output, commit, tag, spdx_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id")
 	if err != nil {
 		return 0, err
 	}
 
 	var rpID uint32
-	err = stmt.QueryRow(repoID, branch, pulledAt, commit, tag, spdxID).Scan(&rpID)
+	err = stmt.QueryRow(repoID, branch, startedAt, finishedAt, status, health, output, commit, tag, spdxID).Scan(&rpID)
 	if err != nil {
 		return 0, err
 	}

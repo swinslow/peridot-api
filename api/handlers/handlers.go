@@ -40,4 +40,10 @@ func (env *Env) RegisterHandlers(router *mux.Router) {
 	router.HandleFunc("/repos/{id:[0-9]+}", env.validateTokenMiddleware(env.reposOneHandler)).Methods("GET", "PUT", "DELETE")
 	// and a repo's branches
 	router.HandleFunc("/repos/{id:[0-9]+}/branches", env.validateTokenMiddleware(env.repoBranchesSubHandler)).Methods("GET", "POST")
+	// and a specific branch, to POST a new repo pull
+	// FIXME the pattern here does not sync with the various rules for branch naming in git
+	router.HandleFunc(`/repos/{id:[0-9]+}/branches/{branch:[0-9a-zA-Z_\-\.]+}`, env.validateTokenMiddleware(env.repoPullsSubHandler)).Methods("GET", "POST")
+
+	// /repopulls -- repo pull data
+	router.HandleFunc("/repopulls/{id:[0-9]+}", env.validateTokenMiddleware(env.repoPullsOneHandler)).Methods("GET", "DELETE")
 }

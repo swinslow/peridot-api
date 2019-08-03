@@ -27,7 +27,7 @@ type RepoPull struct {
 	// FinishedAt is when peridot finished pulling code for
 	// this pull. Should be zero value if code pull has not
 	// yet been completed (or will not complete due to error).
-	FinishedAt time.Time `json:"finished_at,omitempty"`
+	FinishedAt time.Time `json:"finished_at"`
 	// Status is the run status of the pull.
 	Status Status `json:"status"`
 	// Health is the health of the pull.

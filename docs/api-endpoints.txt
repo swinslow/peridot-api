@@ -168,14 +168,13 @@ all are admin only; lower access levels all return {"error": "Access denied"}
 
 = = = = =
 
-repopulls/14: GET, PUT, DELETE
+repopulls/14: GET, DELETE
 - GET: get repo pull
   v+: <= {"id": 14, "repo_id": 3, "branch": "master", "started_at": "2019-...", "finished_at": "2019-...", "status": "stopped", "health": "ok", "output": "", "commit": "...", "tag": "...", "spdx_id": "..."}
-- PUT: update repo pull timing and status data
-  o+: => {"started_at": "2019-...", "finished_at": "2019-...", "status": "stopped", "health": "ok", "output": ""}
-      <= 204
 - DELETE:
   o+: 
+
+note: no PUT for repopulls; should delete and create new instead
 
 repopulls/14/cmd: POST
 - POST: 

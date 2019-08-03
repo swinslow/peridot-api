@@ -15,6 +15,7 @@ type mockDB struct {
 	mockSubprojects  []*datastore.Subproject
 	mockRepos        []*datastore.Repo
 	mockRepoBranches []*datastore.RepoBranch
+	mockRepoPulls    []*datastore.RepoPull
 }
 
 // createMockDB creates mock values for the handler tests to use.
@@ -56,6 +57,13 @@ func createMockDB() *mockDB {
 		{RepoID: 4, Branch: "dev"},
 		{RepoID: 2, Branch: "beta"},
 		{RepoID: 1, Branch: "master"},
+	}
+
+	mdb.mockRepoPulls = []*datastore.RepoPull{
+		{ID: 1, RepoID: 2, Branch: "master", Status: datastore.StatusStopped, Health: datastore.HealthError, Commit: "abcdef012345abcdef012345abcdef0123451234", Tag: "v1.1"},
+		{ID: 2, RepoID: 2, Branch: "master", Status: datastore.StatusStopped, Health: datastore.HealthOK, Commit: "abcdef012345abcdef012345abcdef0123455678", Tag: "v1.2"},
+		{ID: 3, RepoID: 4, Branch: "dev", Status: datastore.StatusRunning, Health: datastore.HealthDegraded, Commit: "abcdef012345abcdef012345abcdef01234590ab"},
+		{ID: 4, RepoID: 2, Branch: "test123", Status: datastore.StatusStartup, Health: datastore.HealthOK, Commit: "abcdef012345abcdef012345abcdef012345cdef"},
 	}
 
 	return mdb
@@ -552,13 +560,24 @@ func (mdb *mockDB) DeleteRepoBranch(repoID uint32, branch string) error {
 // GetAllRepoPullsForRepoBranch returns a slice of all repo
 // pulls in the database for the given Repo ID and branch.
 func (mdb *mockDB) GetAllRepoPullsForRepoBranch(repoID uint32, branch string) ([]*datastore.RepoPull, error) {
-	return []*datastore.RepoPull{}, nil
+	rps := []*datastore.RepoPull{}
+	for _, rp := range mdb.mockRepoPulls {
+		if rp.RepoID == repoID && rp.Branch == branch {
+			rps = append(rps, rp)
+		}
+	}
+	return rps, nil
 }
 
 // GetRepoPullByID returns the RepoPull with the given ID,
 // or nil and an error if not found.
 func (mdb *mockDB) GetRepoPullByID(id uint32) (*datastore.RepoPull, error) {
-	return nil, nil
+	for _, rp := range mdb.mockRepoPulls {
+		if rp.ID == id {
+			return rp, nil
+		}
+	}
+	return nil, fmt.Errorf("Repo pull not found with ID %d", id)
 }
 
 // AddRepoPull adds a new repo pull as specified,
@@ -567,7 +586,7 @@ func (mdb *mockDB) GetRepoPullByID(id uint32) (*datastore.RepoPull, error) {
 // default startup status / health. It returns the new
 // repo pull's ID on success or an error if failing.
 func (mdb *mockDB) AddRepoPull(repoID uint32, branch string, commit string, tag string, spdxID string) (uint32, error) {
-	return 0, nil
+	return mdb.AddFullRepoPull(repoID, branch, time.Time{}, time.Time{}, datastore.StatusStartup, datastore.HealthOK, "", commit, tag, spdxID)
 }
 
 // AddFullRepoPull adds a new repo pull with full specified
@@ -575,14 +594,69 @@ func (mdb *mockDB) AddRepoPull(repoID uint32, branch string, commit string, tag 
 // data. It returns the new repo pull's ID on success or an
 // error if failing.
 func (mdb *mockDB) AddFullRepoPull(repoID uint32, branch string, startedAt time.Time, finishedAt time.Time, status datastore.Status, health datastore.Health, output string, commit string, tag string, spdxID string) (uint32, error) {
-	return 0, nil
+	// make sure repo pull ID and branch are valid
+	_, err := mdb.GetRepoByID(repoID)
+	if err != nil {
+		return 0, fmt.Errorf("Repo not found with ID %d", repoID)
+	}
+	branches, err := mdb.GetAllRepoBranchesForRepoID(repoID)
+	if err != nil {
+		return 0, fmt.Errorf("Repo branches not found with repo ID %d", repoID)
+	}
+	found := false
+	for _, b := range branches {
+		if b.RepoID == repoID && b.Branch == branch {
+			found = true
+		}
+	}
+	if !found {
+		return 0, fmt.Errorf("Branch %s not found with repo ID %d", branch, repoID)
+	}
+
+	// get max mock repo pull ID
+	var maxID uint32
+	for _, rp := range mdb.mockRepoPulls {
+		if rp.ID > maxID {
+			maxID = rp.ID
+		}
+	}
+
+	newID := maxID + 1
+
+	rp := &datastore.RepoPull{
+		ID:     newID,
+		RepoID: repoID,
+		Branch: branch,
+		Status: status,
+		Health: health,
+		Output: output,
+		Commit: commit,
+		Tag:    tag,
+		SPDXID: spdxID,
+	}
+
+	mdb.mockRepoPulls = append(mdb.mockRepoPulls, rp)
+	return newID, nil
 }
 
 // DeleteRepoPull deletes an existing RepoPull with the
 // given ID. It returns nil on success or an error if
 // failing.
 func (mdb *mockDB) DeleteRepoPull(id uint32) error {
-	return nil
+	found := false
+	newMockRepoPulls := []*datastore.RepoPull{}
+	for _, rp := range mdb.mockRepoPulls {
+		if rp.ID == id {
+			found = true
+		} else {
+			newMockRepoPulls = append(newMockRepoPulls, rp)
+		}
+	}
+	if found {
+		mdb.mockRepoPulls = newMockRepoPulls
+		return nil
+	}
+	return fmt.Errorf("Repo pull not found for ID %d", id)
 }
 
 // ===== FileHashes =====

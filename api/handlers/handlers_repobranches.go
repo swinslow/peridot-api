@@ -11,7 +11,7 @@ import (
 	"github.com/swinslow/peridot-api/internal/datastore"
 )
 
-// ========== HANDLER for /subprojects/{id}/repos
+// ========== HANDLER for /repos/{id}/branches
 
 func (env *Env) repoBranchesSubHandler(w http.ResponseWriter, r *http.Request) {
 	// responses will be JSON format

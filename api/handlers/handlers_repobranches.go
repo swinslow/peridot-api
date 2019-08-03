@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"sort"
 
-	"github.com/swinslow/peridot-api/internal/datastore"
+	"github.com/swinslow/peridot-db/pkg/datastore"
 )
 
 // ========== HANDLER for /repos/{id}/branches

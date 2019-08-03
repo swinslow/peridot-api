@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/swinslow/peridot-api/internal/datastore"
+	"github.com/swinslow/peridot-db/pkg/datastore"
 )
 
 // used to strip down the info that is returned to

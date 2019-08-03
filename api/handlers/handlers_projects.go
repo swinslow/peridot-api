@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/swinslow/peridot-api/internal/datastore"
+	"github.com/swinslow/peridot-db/pkg/datastore"
 )
 
 func (env *Env) projectsHandler(w http.ResponseWriter, r *http.Request) {

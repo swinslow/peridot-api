@@ -12,7 +12,7 @@ import (
 	"golang.org/x/oauth2"
 	githuboauth "golang.org/x/oauth2/github"
 
-	"github.com/swinslow/peridot-api/internal/datastore"
+	"github.com/swinslow/peridot-db/pkg/datastore"
 )
 
 // getTestEnv creates the Env object used for the handlers

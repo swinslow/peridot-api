@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/swinslow/peridot-api/internal/auth"
-	"github.com/swinslow/peridot-api/internal/datastore"
+	"github.com/swinslow/peridot-db/pkg/datastore"
 )
 
 const (

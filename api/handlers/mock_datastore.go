@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/swinslow/peridot-api/internal/datastore"
+	"github.com/swinslow/peridot-db/pkg/datastore"
 )
 
 type mockDB struct {

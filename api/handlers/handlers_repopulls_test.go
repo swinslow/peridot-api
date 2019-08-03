@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/swinslow/peridot-api/internal/datastore"
+	"github.com/swinslow/peridot-db/pkg/datastore"
 	hu "github.com/swinslow/peridot-api/test/handlerutils"
 )
 

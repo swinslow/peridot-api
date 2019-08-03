@@ -1,0 +1,182 @@
+/hello: check if server is responsive
+- GET: get hello
+  returns:
+    {"message": "hello"}
+
+= = = = =
+
+/admin: for all administrative actions
+all are admin only; lower access levels all return {"error": "Access denied"}
+
+/admin/db: POST
+- POST: send commands:
+    {"command": "resetDB"}: drop and recreate obsidian schema
+  returns on success:
+    <= 204 No Content
+
+= = = = =
+
+/auth: for authorization and login
+
+/auth/login:
+- GET: start OAuth flow by redirecting to Github OAuth page
+  returns: 302 + redirect
+/auth/redirect:
+- GitHub OAuth redirect access point; RETURNS HTML, NOT JSON, to save JWT in local storage and trigger a redirect
+
+= = = = =
+
+/users: for User data (NOT login / logout)
+- GET: get all users
+  returns:
+    v/c/o: {"users": [{"id": 1, "github": "..."}]}
+      (omits name, access level)
+    a: {"users": [{"id": 1, "name": "...", "github": "...", "access": "..."}, ...]}
+- POST: create new user
+    a: => {"name": "...", "github": "...", "access": "..."}
+  returns on success:
+    a: <= {"id": 3}
+  on error:
+    a: <= {"error": "duplicate Github user name"}
+
+/users/3:
+- GET: get user data
+  returns:
+    v/c/o, id=self: {"user":{"id": 3, "name": "...", "github": "...", "access": "..."}}
+    v/c/o, id!=self: {"id": 3, "github": "..."}
+      (omits name, access level)
+    a: {"user":{"id": 3, "name": "...", "github": "...", "access": "..."}}
+- PUT: update user data
+    v/c/o, id=self: => {"name": "...", "github": "..."}
+      // QUERY: should allow to update own github user name?
+      // NO, not at present, b/c need to handle via oauth flow
+    returns on success:
+      <= 204 No Content
+    a: => {"name": "...", "github": "...", "access": "..."}
+      // NOTE: can update access also; CANNOT update ID
+      // QUERY: should allow to update own github user name?
+      // YES, user will then need to login using github oauth
+    returns on success:
+      <= 204 No Content
+- DELETE: remove user
+    // QUERY: requires remapping existing clearing results? or e.g. comments?
+    v/c/o, id=self: => {"confirm": true}
+      // QUERY: should allow to delete self?
+      // NO, not at present, b/c might need to e.g. reassign related IDs
+    returns on success:
+      <= 204 No Content
+    a: => {"confirm": true}
+      // QUERY: should allow to delete self?
+    returns on success:
+      <= 204 No Content
+
+= = = = =
+
+/projects: for Project data
+- GET: get all projects
+  returns:
+    {"projects": [1: {<project 1 data>}, 2: {<project 2 data>}, ...]}
+- POST: create new project:
+    a / o: => {"name": "...", "fullname": "..."}
+    returns on success:
+      {"id": 3}
+    on error:
+      {"error": "duplicate project name"}
+
+/projects?name=...:
+- GET: get the project with the given name
+  returns:
+    {"projects": [1: {<project 1 data>}, 2: {<project 2 data>}, ...]}
+- POST: create new project:
+    a / o: => {"name": "...", "fullname": "..."}
+    returns on success:
+      {"id": 3}
+    on error:
+      {"error": "duplicate project name"}
+
+/projects/3:
+- GET: get project data
+  returns:
+    {"id": 3, "name": "...", "fullname": "..."}
+- PUT: update project:
+    a / o: => {"name": "...", "fullname": "..."}
+    returns same as POST [NO -- needs same as GET]
+- DELETE: delete project
+    a:
+    returns:
+      204 No Content
+    on error:
+      {"error": "..."}
+
+/projects/3/subprojects:
+- GET: get list of subprojects for this project
+  returns:
+    {"subprojects": [{"id": 1, project_id: 3, "name": "...", "fullname": "..."}, ...]}
+
+= = = = =
+
+/subprojects: for Subproject data
+- GET: get all subprojects
+  returns:
+    {"subprojects": [1: {<subproject 1 data>}, 2: {<subproject 2 data>}, ...]}
+- POST: create new subproject:
+    a / o: => {"project_id": 2, "name": "...", "fullname": "..."}
+    returns on success:
+      {"id": 3}
+    on error:
+      {"error": "duplicate subproject name"}
+
+/subprojects/3: GET, PUT, DELETE
+
+/subprojects/3/repos: GET, POST
+
+= = = = =
+
+/repos:
+- GET:
+  v+: <= {"repos": [{"id": 1, "subproject_id": 2, "name": "xyzzy-core", "address": "https://github.com/swinslow/xyzzy-core.git"}, ...]}
+- POST:
+  o+: => {"subproject_id": 2, "name": "xyzzy-api", "address": "https://github.com/swinslow/xyzzy-api.git"}
+      <= 201, {"id": 5}
+
+/repos/3: GET, PUT, DELETE
+
+= = = = =
+
+/repos/3/branches: GET, POST
+- GET: get all branches for this repo
+  v+: <= {"branches": ["branch1", "branch2", ...]} // array of strings
+- POST:
+  o+: => {"branch": "master"}
+      <= 201 {"branch": "master"}
+
+= = = = =
+
+/repos/3/branches/master: GET, POST
+- GET: get repo pulls for this branch
+  v+: <= {"pulls": [
+    ...
+    {"id": 14, "repo_id": 3, "branch": "master", "started_at": "2019-...", "finished_at": "2019-...", "status": "stopped", "health": "ok", "output": "", "commit": "...", "tag": "...", "spdx_id": "..."},
+    ...
+  ]}
+- POST:
+  o+: => {["commit":"..." | "tag":"..."] [, "spdx_id":"..."]}
+      <= 201 {"id": 15}
+      if commit or tag is empty string or absent, will pull from top of branch
+      e.g., request can just be {}
+      cannot have both tag and commit??
+
+= = = = =
+
+repopulls/14: GET, PUT, DELETE
+- GET: get repo pull
+  v+: <= {"id": 14, "repo_id": 3, "branch": "master", "started_at": "2019-...", "finished_at": "2019-...", "status": "stopped", "health": "ok", "output": "", "commit": "...", "tag": "...", "spdx_id": "..."}
+- PUT: update repo pull timing and status data
+  o+: => {"started_at": "2019-...", "finished_at": "2019-...", "status": "stopped", "health": "ok", "output": ""}
+      <= 204
+- DELETE:
+  o+: 
+
+repopulls/14/cmd: POST
+- POST: 
+

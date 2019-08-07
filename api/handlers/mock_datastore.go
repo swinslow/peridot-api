@@ -689,7 +689,7 @@ func (mdb *mockDB) DeleteFileHash(id uint64) error {
 	return nil
 }
 
-// ===== FileInstancees =====
+// ===== FileInstances =====
 
 // GetFileInstanceByID returns the FileInstance with the given ID,
 // or nil and an error if not found.
@@ -709,5 +709,50 @@ func (mdb *mockDB) AddFileInstance(repoPullID uint32, fileHashID uint64, path st
 // with the given ID. It returns nil on success or an
 // if failing.
 func (mdb *mockDB) DeleteFileInstance(id uint64) error {
+	return nil
+}
+
+// ===== Agents =====
+
+// GetAllAgents returns a slice of all agents in the database.
+func (mdb *mockDB) GetAllAgents() ([]*datastore.Agent, error) {
+	return []*datastore.Agent{}, nil
+}
+
+// GetAgentByID returns the Agent with the given ID, or nil
+// and an error if not found.
+func (mdb *mockDB) GetAgentByID(id uint32) (*datastore.Agent, error) {
+	return nil, nil
+}
+
+// GetAgentByName returns the Agent with the given Name, or nil
+// and an error if not found.
+func (mdb *mockDB) GetAgentByName(name string) (*datastore.Agent, error) {
+	return nil, nil
+}
+
+// AddAgent adds a new Agent with the given data. It returns the new
+// agent's ID on success or an error if failing.
+func (mdb *mockDB) AddAgent(name string, isActive bool, address string, port int, isCodeReader bool, isSpdxReader bool, isCodeWriter bool, isSpdxWriter bool) (uint32, error) {
+	return 0, nil
+}
+
+// UpdateAgentStatus updates an existing Agent with the given ID,
+// setting whether it is active and its address and port. It returns
+// nil on success or an error if failing.
+func (mdb *mockDB) UpdateAgentStatus(id uint32, isActive bool, address string, port int) error {
+	return nil
+}
+
+// UpdateAgentAbilities updates an existing Agent with the given ID,
+// setting its abilities to read/write code/SPDX. It returns nil on
+// success or an error if failing.
+func (mdb *mockDB) UpdateAgentAbilities(id uint32, isCodeReader bool, isSpdxReader bool, isCodeWriter bool, isSpdxWriter bool) error {
+	return nil
+}
+
+// DeleteAgent deletes an existing Agent with the given ID.
+// It returns nil on success or an error if failing.
+func (mdb *mockDB) DeleteAgent(id uint32) error {
 	return nil
 }

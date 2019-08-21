@@ -756,3 +756,42 @@ func (mdb *mockDB) UpdateAgentAbilities(id uint32, isCodeReader bool, isSpdxRead
 func (mdb *mockDB) DeleteAgent(id uint32) error {
 	return nil
 }
+
+// ===== Jobs =====
+// GetAllJobsForRepoPull returns a slice of all jobs
+// in the database for the given RepoPull ID.
+func (mdb *mockDB) GetAllJobsForRepoPull(rpID uint32) ([]*datastore.Job, error) {
+	return []*datastore.Job{}, nil
+}
+
+// GetJobByID returns the job in the database with the given ID.
+func (mdb *mockDB) GetJobByID(id uint32) (*datastore.Job, error) {
+	return nil, nil
+}
+
+// AddJob adds a new job as specified, with empty configs.
+// It returns the new job's ID on success or an error if failing.
+func (mdb *mockDB) AddJob(repoPullID uint32, agentID uint32, priorJobIDs []uint32) (uint32, error) {
+	return 0, nil
+}
+
+// AddJobWithConfigs adds a new job as specified, with the
+// noted configuration values. It returns the new job's ID
+// on success or an error if failing.
+func (mdb *mockDB) AddJobWithConfigs(repoPullID uint32, agentID uint32, priorJobIDs []uint32, configKV map[string]string, configCodeReader map[string]datastore.JobPathConfig, configSpdxReader map[string]datastore.JobPathConfig) (uint32, error) {
+	return 0, nil
+}
+
+// UpdateJobIsReady sets the boolean value to specify
+// whether the Job with the gievn ID is ready to be run.
+// It does _not_ actually run the Job. It returns nil on
+// success or an error if failing.
+func (mdb *mockDB) UpdateJobIsReady(id uint32, ready bool) error {
+	return nil
+}
+
+// DeleteJob deletes an existing Job with the given ID.
+// It returns nil on success or an error if failing.
+func (mdb *mockDB) DeleteJob(id uint32) error {
+	return nil
+}

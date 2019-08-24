@@ -758,7 +758,6 @@ func (mdb *mockDB) DeleteAgent(id uint32) error {
 }
 
 // ===== Jobs =====
-
 // GetAllJobsForRepoPull returns a slice of all jobs
 // in the database for the given RepoPull ID.
 func (mdb *mockDB) GetAllJobsForRepoPull(rpID uint32) ([]*datastore.Job, error) {

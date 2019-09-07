@@ -16,6 +16,8 @@ type mockDB struct {
 	mockRepos        []*datastore.Repo
 	mockRepoBranches []*datastore.RepoBranch
 	mockRepoPulls    []*datastore.RepoPull
+	mockAgents       []*datastore.Agent
+	mockJobs         []*datastore.Job
 }
 
 // createMockDB creates mock values for the handler tests to use.
@@ -65,6 +67,14 @@ func createMockDB() *mockDB {
 		{ID: 3, RepoID: 4, Branch: "dev", Status: datastore.StatusRunning, Health: datastore.HealthDegraded, Commit: "abcdef012345abcdef012345abcdef01234590ab"},
 		{ID: 4, RepoID: 2, Branch: "test123", Status: datastore.StatusStartup, Health: datastore.HealthOK, Commit: "abcdef012345abcdef012345abcdef012345cdef"},
 	}
+
+	mdb.mockAgents = []*datastore.Agent{
+		{ID: 1, Name: "idsearcher", IsActive: true, Address: "localhost", Port: 9001, IsCodeReader: true, IsSpdxReader: false, IsCodeWriter: false, IsSpdxWriter: true},
+		{ID: 2, Name: "attributer", IsActive: true, Address: "localhost", Port: 9002, IsCodeReader: false, IsSpdxReader: true, IsCodeWriter: true, IsSpdxWriter: false},
+		{ID: 3, Name: "broken-agent", IsActive: false, Address: "example.com", Port: 9003, IsCodeReader: true, IsSpdxReader: false, IsCodeWriter: true, IsSpdxWriter: true},
+	}
+
+	mdb.mockJobs = []*datastore.Job{}
 
 	return mdb
 }
@@ -654,6 +664,15 @@ func (mdb *mockDB) DeleteRepoPull(id uint32) error {
 	}
 	if found {
 		mdb.mockRepoPulls = newMockRepoPulls
+		// and cascade delete any jobs under this RepoPull
+		for _, j := range mdb.mockJobs {
+			if j.RepoPullID == id {
+				err := mdb.DeleteJob(j.ID)
+				if err != nil {
+					return fmt.Errorf("Error with cascade delete of jobs: %v", err)
+				}
+			}
+		}
 		return nil
 	}
 	return fmt.Errorf("Repo pull not found for ID %d", id)
@@ -716,70 +735,185 @@ func (mdb *mockDB) DeleteFileInstance(id uint64) error {
 
 // GetAllAgents returns a slice of all agents in the database.
 func (mdb *mockDB) GetAllAgents() ([]*datastore.Agent, error) {
-	return []*datastore.Agent{}, nil
+	return mdb.mockAgents, nil
 }
 
 // GetAgentByID returns the Agent with the given ID, or nil
 // and an error if not found.
 func (mdb *mockDB) GetAgentByID(id uint32) (*datastore.Agent, error) {
-	return nil, nil
+	for _, ag := range mdb.mockAgents {
+		if ag.ID == id {
+			return ag, nil
+		}
+	}
+	return nil, fmt.Errorf("Agent not found with ID %d", id)
 }
 
 // GetAgentByName returns the Agent with the given Name, or nil
 // and an error if not found.
 func (mdb *mockDB) GetAgentByName(name string) (*datastore.Agent, error) {
-	return nil, nil
+	for _, ag := range mdb.mockAgents {
+		if ag.Name == name {
+			return ag, nil
+		}
+	}
+	return nil, fmt.Errorf("Agent not found with name %s", name)
 }
 
 // AddAgent adds a new Agent with the given data. It returns the new
 // agent's ID on success or an error if failing.
 func (mdb *mockDB) AddAgent(name string, isActive bool, address string, port int, isCodeReader bool, isSpdxReader bool, isCodeWriter bool, isSpdxWriter bool) (uint32, error) {
-	return 0, nil
+	// get max mock agent ID
+	var maxID uint32
+	for _, ag := range mdb.mockAgents {
+		if ag.Name == name {
+			return 0, fmt.Errorf("Agent with name %s already exists in database", name)
+		}
+		if ag.ID > maxID {
+			maxID = ag.ID
+		}
+	}
+
+	newID := maxID + 1
+	newAgent := &datastore.Agent{
+		ID:           newID,
+		Name:         name,
+		IsActive:     isActive,
+		Address:      address,
+		Port:         port,
+		IsCodeReader: isCodeReader,
+		IsSpdxReader: isSpdxReader,
+		IsCodeWriter: isCodeWriter,
+		IsSpdxWriter: isSpdxWriter,
+	}
+
+	mdb.mockAgents = append(mdb.mockAgents, newAgent)
+	return newID, nil
 }
 
 // UpdateAgentStatus updates an existing Agent with the given ID,
 // setting whether it is active and its address and port. It returns
 // nil on success or an error if failing.
 func (mdb *mockDB) UpdateAgentStatus(id uint32, isActive bool, address string, port int) error {
-	return nil
+	for _, ag := range mdb.mockAgents {
+		if ag.ID == id {
+			ag.IsActive = isActive
+			ag.Address = address
+			ag.Port = port
+			return nil
+		}
+	}
+
+	return fmt.Errorf("Agent not found with ID %d", id)
 }
 
 // UpdateAgentAbilities updates an existing Agent with the given ID,
 // setting its abilities to read/write code/SPDX. It returns nil on
 // success or an error if failing.
 func (mdb *mockDB) UpdateAgentAbilities(id uint32, isCodeReader bool, isSpdxReader bool, isCodeWriter bool, isSpdxWriter bool) error {
-	return nil
+	for _, ag := range mdb.mockAgents {
+		if ag.ID == id {
+			ag.IsCodeReader = isCodeReader
+			ag.IsSpdxReader = isSpdxReader
+			ag.IsCodeWriter = isCodeWriter
+			ag.IsSpdxWriter = isSpdxWriter
+			return nil
+		}
+	}
+
+	return fmt.Errorf("Agent not found with ID %d", id)
 }
 
 // DeleteAgent deletes an existing Agent with the given ID.
 // It returns nil on success or an error if failing.
 func (mdb *mockDB) DeleteAgent(id uint32) error {
-	return nil
+	found := false
+	newMockAgents := []*datastore.Agent{}
+	for _, ag := range mdb.mockAgents {
+		if ag.ID == id {
+			found = true
+		} else {
+			newMockAgents = append(newMockAgents, ag)
+		}
+	}
+	if found {
+		mdb.mockAgents = newMockAgents
+		// and cascade delete any jobs under this agent
+		for _, j := range mdb.mockJobs {
+			if j.AgentID == id {
+				err := mdb.DeleteJob(j.ID)
+				if err != nil {
+					return fmt.Errorf("Error with cascade delete of jobs: %v", err)
+				}
+			}
+		}
+		return nil
+	}
+	return fmt.Errorf("Agent not found with ID %d", id)
 }
 
 // ===== Jobs =====
 // GetAllJobsForRepoPull returns a slice of all jobs
 // in the database for the given RepoPull ID.
 func (mdb *mockDB) GetAllJobsForRepoPull(rpID uint32) ([]*datastore.Job, error) {
-	return []*datastore.Job{}, nil
+	js := []*datastore.Job{}
+	for _, j := range mdb.mockJobs {
+		if j.RepoPullID == rpID {
+			js = append(js, j)
+		}
+	}
+	return js, nil
 }
 
 // GetJobByID returns the job in the database with the given ID.
 func (mdb *mockDB) GetJobByID(id uint32) (*datastore.Job, error) {
-	return nil, nil
+	for _, j := range mdb.mockJobs {
+		if j.ID == id {
+			return j, nil
+		}
+	}
+	return nil, fmt.Errorf("Job not found with ID %d", id)
 }
 
 // AddJob adds a new job as specified, with empty configs.
 // It returns the new job's ID on success or an error if failing.
 func (mdb *mockDB) AddJob(repoPullID uint32, agentID uint32, priorJobIDs []uint32) (uint32, error) {
-	return 0, nil
+	return mdb.AddJobWithConfigs(repoPullID, agentID, priorJobIDs, nil, nil, nil)
 }
 
 // AddJobWithConfigs adds a new job as specified, with the
 // noted configuration values. It returns the new job's ID
 // on success or an error if failing.
 func (mdb *mockDB) AddJobWithConfigs(repoPullID uint32, agentID uint32, priorJobIDs []uint32, configKV map[string]string, configCodeReader map[string]datastore.JobPathConfig, configSpdxReader map[string]datastore.JobPathConfig) (uint32, error) {
-	return 0, nil
+	// get max mock job ID
+	var maxID uint32
+	for _, j := range mdb.mockJobs {
+		if j.ID > maxID {
+			maxID = j.ID
+		}
+	}
+
+	newID := maxID + 1
+	newJob := &datastore.Job{
+		ID:          newID,
+		RepoPullID:  repoPullID,
+		AgentID:     agentID,
+		PriorJobIDs: priorJobIDs,
+		StartedAt:   time.Time{},
+		FinishedAt:  time.Time{},
+		Status:      datastore.StatusStartup,
+		Health:      datastore.HealthOK,
+		Output:      "",
+		IsReady:     false,
+		Config: datastore.JobConfig{
+			KV:         configKV,
+			CodeReader: configCodeReader,
+			SpdxReader: configSpdxReader,
+		},
+	}
+
+	mdb.mockJobs = append(mdb.mockJobs, newJob)
+	return newID, nil
 }
 
 // UpdateJobIsReady sets the boolean value to specify
@@ -787,11 +921,30 @@ func (mdb *mockDB) AddJobWithConfigs(repoPullID uint32, agentID uint32, priorJob
 // It does _not_ actually run the Job. It returns nil on
 // success or an error if failing.
 func (mdb *mockDB) UpdateJobIsReady(id uint32, ready bool) error {
-	return nil
+	for _, j := range mdb.mockJobs {
+		if j.ID == id {
+			j.IsReady = ready
+			return nil
+		}
+	}
+	return fmt.Errorf("Job not found with ID %d", id)
 }
 
 // DeleteJob deletes an existing Job with the given ID.
 // It returns nil on success or an error if failing.
 func (mdb *mockDB) DeleteJob(id uint32) error {
-	return nil
+	found := false
+	newMockJobs := []*datastore.Job{}
+	for _, j := range mdb.mockJobs {
+		if j.ID == id {
+			found = true
+		} else {
+			newMockJobs = append(newMockJobs, j)
+		}
+	}
+	if found {
+		mdb.mockJobs = newMockJobs
+		return nil
+	}
+	return fmt.Errorf("Job not found with ID %d", id)
 }

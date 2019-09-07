@@ -72,9 +72,36 @@ func createMockDB() *mockDB {
 		{ID: 1, Name: "idsearcher", IsActive: true, Address: "localhost", Port: 9001, IsCodeReader: true, IsSpdxReader: false, IsCodeWriter: false, IsSpdxWriter: true},
 		{ID: 2, Name: "attributer", IsActive: true, Address: "localhost", Port: 9002, IsCodeReader: false, IsSpdxReader: true, IsCodeWriter: true, IsSpdxWriter: false},
 		{ID: 3, Name: "broken-agent", IsActive: false, Address: "example.com", Port: 9003, IsCodeReader: true, IsSpdxReader: false, IsCodeWriter: true, IsSpdxWriter: true},
+		{ID: 4, Name: "getter-github", IsActive: true, Address: "localhost", Port: 9004, IsCodeReader: false, IsSpdxReader: false, IsCodeWriter: true, IsSpdxWriter: false},
+		{ID: 5, Name: "analyze-godeps", IsActive: true, Address: "localhost", Port: 9005, IsCodeReader: true, IsSpdxReader: true, IsCodeWriter: true, IsSpdxWriter: true},
+		{ID: 6, Name: "decider", IsActive: true, Address: "localhost", Port: 9006, IsCodeReader: false, IsSpdxReader: true, IsCodeWriter: false, IsSpdxWriter: true},
 	}
 
-	mdb.mockJobs = []*datastore.Job{}
+	mdb.mockJobs = []*datastore.Job{
+		// mock jobs for mock repo pull getters
+		{ID: 1, RepoPullID: 1, AgentID: 4, PriorJobIDs: nil, StartedAt: time.Date(2019, 5, 2, 13, 53, 41, 0, time.UTC), FinishedAt: time.Date(2019, 5, 2, 13, 55, 0, 0, time.UTC), Status: datastore.StatusStopped, Health: datastore.HealthError, Output: "error during download from remote repo", IsReady: true, Config: datastore.JobConfig{}},
+		{ID: 2, RepoPullID: 2, AgentID: 4, PriorJobIDs: nil, StartedAt: time.Date(2019, 5, 2, 14, 7, 0, 0, time.UTC), FinishedAt: time.Date(2019, 5, 2, 14, 7, 30, 0, time.UTC), Status: datastore.StatusStopped, Health: datastore.HealthOK, Output: "successfully retrieved repo", IsReady: true, Config: datastore.JobConfig{}},
+		{ID: 3, RepoPullID: 3, AgentID: 4, PriorJobIDs: nil, StartedAt: time.Date(2019, 5, 3, 1, 0, 0, 0, time.UTC), FinishedAt: time.Date(2019, 5, 3, 1, 1, 0, 0, time.UTC), Status: datastore.StatusRunning, Health: datastore.HealthDegraded, Output: "slowness during download", IsReady: true, Config: datastore.JobConfig{}},
+		{ID: 4, RepoPullID: 4, AgentID: 4, PriorJobIDs: nil, StartedAt: time.Time{}, FinishedAt: time.Time{}, Status: datastore.StatusStartup, Health: datastore.HealthOK, Output: "", IsReady: false, Config: datastore.JobConfig{}},
+
+		// mock jobs for analysis
+		// single-shot
+		{ID: 5, RepoPullID: 2, AgentID: 1, PriorJobIDs: nil, StartedAt: time.Date(2019, 5, 2, 14, 7, 0, 0, time.UTC), FinishedAt: time.Date(2019, 5, 2, 14, 8, 0, 0, time.UTC), Status: datastore.StatusStopped, Health: datastore.HealthOK, Output: "found 57 files with short-form license IDs in 182 files", IsReady: true, Config: datastore.JobConfig{}},
+
+		// with one prior ID
+		{ID: 6, RepoPullID: 2, AgentID: 1, PriorJobIDs: []uint32{5}, StartedAt: time.Date(2019, 5, 2, 14, 9, 0, 0, time.UTC), FinishedAt: time.Date(2019, 5, 2, 14, 9, 10, 0, time.UTC), Status: datastore.StatusStopped, Health: datastore.HealthOK, Output: "wrote attributions", IsReady: true, Config: datastore.JobConfig{}},
+
+		// with multiple prior IDs and complex configs
+		{ID: 7, RepoPullID: 2, AgentID: 5, PriorJobIDs: nil, StartedAt: time.Date(2019, 5, 2, 14, 9, 30, 0, time.UTC), FinishedAt: time.Time{}, Status: datastore.StatusRunning, Health: datastore.HealthDegraded, Output: "unable to retrieve some dependencies", IsReady: true, Config: datastore.JobConfig{}},
+		{ID: 8, RepoPullID: 2, AgentID: 6, PriorJobIDs: []uint32{5, 7}, StartedAt: time.Time{}, FinishedAt: time.Time{}, Status: datastore.StatusStartup, Health: datastore.HealthOK, Output: "", IsReady: true, Config: datastore.JobConfig{
+			KV:         map[string]string{"prefer": "primary"},
+			CodeReader: nil,
+			SpdxReader: map[string]datastore.JobPathConfig{
+				"primary": datastore.JobPathConfig{PriorJobID: 5},
+				"godeps":  datastore.JobPathConfig{PriorJobID: 7},
+			},
+		}},
+	}
 
 	return mdb
 }

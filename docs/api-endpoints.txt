@@ -181,6 +181,17 @@ repopulls/14/cmd: POST
 
 = = = = =
 
+/agents:
+- GET:
+  v+: <= {"agents": [{"id":17, "name":"wevs", "is_active":true, "address":"localhost", "port":9065, "is_codereader":true, "is_spdxreader":false, "is_codewriter":false, "is_spdxwriter":true}, ...]}
+- POST:
+  o+: => {"name":"idsearcher", "is_active":true, "address":"localhost", "port":9014, "is_codereader":true, "is_spdxreader":false, "is_codewriter":false, "is_spdxwriter":true}
+      <= 201, {"id": 18}
+
+/agents/18: GET, PUT, DELETE
+
+= = = = =
+
 /repopulls/14/jobs:
 - GET:
   v+: <= {"jobs": [{"id":17, "repopull_id":3, "agent_id":8, "started_at":"2019-01-02T15:04:05Z", "finished_at":"2019-01-02T15:05:00Z",

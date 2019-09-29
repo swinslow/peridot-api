@@ -87,3 +87,166 @@ func TestCannotPostAgentHandlerAsBadUser(t *testing.T) {
 	hu.ServeHandler(rec, req, http.HandlerFunc(env.agentsHandler), "/agents")
 	hu.ConfirmInvalidAuth(t, rec, ErrAuthGithub)
 }
+
+// ===== GET /agents/3 =====
+
+func TestCanGetAgentsOneHandlerAsViewer(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "GET", "/agents/3", "", "viewer")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.agentsOneHandler), "/agents/{id}")
+	hu.ConfirmOKResponse(t, rec)
+
+	wanted := `{"agent": {"id": 3, "name":"broken-agent", "is_active":false, "address":"example.com", "port":9003, "is_codereader":true, "is_spdxreader":false, "is_codewriter":true, "is_spdxwriter":true}}`
+	hu.CheckResponse(t, rec, wanted)
+}
+
+func TestCannotGetAgentsOneHandlerAsBadUser(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "GET", "/agents/3", ``, "disabled")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.agentsOneHandler), "/agents/{id}")
+	hu.ConfirmAccessDenied(t, rec)
+
+	rec, req, env = setupTestEnv(t, "GET", "/agents/3", ``, "invalid")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.agentsOneHandler), "/agents/{id}")
+	hu.ConfirmInvalidAuth(t, rec, ErrAuthGithub)
+}
+
+// ===== PUT /agents/3 =====
+
+func TestCanPutAgentsOneHandlerAsOperator(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "PUT", "/agents/3", `{"is_active":true, "address":"agentHost", "port":8089, "is_codereader":true, "is_spdxreader":true, "is_codewriter":false, "is_spdxwriter":false}`, "operator")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.agentsOneHandler), "/agents/{id}")
+	hu.ConfirmNoContentResponse(t, rec)
+
+	// and verify state of database now
+	agent, err := env.db.GetAgentByID(3)
+	if err != nil {
+		t.Errorf("expected nil error, got %v", err)
+	}
+	wantedAgent := &datastore.Agent{ID: 3, Name: "broken-agent", IsActive: true, Address: "agentHost", Port: 8089, IsCodeReader: true, IsSpdxReader: true, IsCodeWriter: false, IsSpdxWriter: false}
+	if agent.ID != wantedAgent.ID || agent.Name != wantedAgent.Name || agent.IsActive != wantedAgent.IsActive || agent.Address != wantedAgent.Address || agent.IsCodeReader != wantedAgent.IsCodeReader || agent.IsSpdxReader != wantedAgent.IsSpdxReader || agent.IsCodeWriter != wantedAgent.IsCodeWriter || agent.IsSpdxWriter != wantedAgent.IsSpdxWriter {
+		t.Errorf("expected %#v, got %#v", wantedAgent, agent)
+	}
+}
+
+func TestCanPutAgentsOneHandlerAsOperatorWithJustIsActive(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "PUT", "/agents/3", `{"is_active":true}`, "operator")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.agentsOneHandler), "/agents/{id}")
+	hu.ConfirmNoContentResponse(t, rec)
+
+	// and verify state of database now
+	agent, err := env.db.GetAgentByID(3)
+	if err != nil {
+		t.Errorf("expected nil error, got %v", err)
+	}
+	wantedAgent := &datastore.Agent{ID: 3, Name: "broken-agent", IsActive: true, Address: "example.com", Port: 9003, IsCodeReader: true, IsSpdxReader: false, IsCodeWriter: true, IsSpdxWriter: true}
+	if agent.ID != wantedAgent.ID || agent.Name != wantedAgent.Name || agent.IsActive != wantedAgent.IsActive || agent.Address != wantedAgent.Address || agent.IsCodeReader != wantedAgent.IsCodeReader || agent.IsSpdxReader != wantedAgent.IsSpdxReader || agent.IsCodeWriter != wantedAgent.IsCodeWriter || agent.IsSpdxWriter != wantedAgent.IsSpdxWriter {
+		t.Errorf("expected %#v, got %#v", wantedAgent, agent)
+	}
+}
+
+func TestCanPutAgentsOneHandlerAsOperatorWithJustIsActiveFalse(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "PUT", "/agents/2", `{"is_active":false}`, "operator")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.agentsOneHandler), "/agents/{id}")
+	hu.ConfirmNoContentResponse(t, rec)
+
+	// and verify state of database now
+	agent, err := env.db.GetAgentByID(2)
+	if err != nil {
+		t.Errorf("expected nil error, got %v", err)
+	}
+	wantedAgent := &datastore.Agent{ID: 2, Name: "attributer", IsActive: false, Address: "localhost", Port: 9002, IsCodeReader: false, IsSpdxReader: true, IsCodeWriter: true, IsSpdxWriter: false}
+	if agent.ID != wantedAgent.ID || agent.Name != wantedAgent.Name || agent.IsActive != wantedAgent.IsActive || agent.Address != wantedAgent.Address || agent.IsCodeReader != wantedAgent.IsCodeReader || agent.IsSpdxReader != wantedAgent.IsSpdxReader || agent.IsCodeWriter != wantedAgent.IsCodeWriter || agent.IsSpdxWriter != wantedAgent.IsSpdxWriter {
+		t.Errorf("expected %#v, got %#v", wantedAgent, agent)
+	}
+}
+
+func TestCanPutAgentsOneHandlerAsOperatorWithJustAddressAndPort(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "PUT", "/agents/3", `{"address":"localhost", "port":8089}`, "operator")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.agentsOneHandler), "/agents/{id}")
+	hu.ConfirmNoContentResponse(t, rec)
+
+	// and verify state of database now
+	agent, err := env.db.GetAgentByID(3)
+	if err != nil {
+		t.Errorf("expected nil error, got %v", err)
+	}
+	wantedAgent := &datastore.Agent{ID: 3, Name: "broken-agent", IsActive: false, Address: "localhost", Port: 8089, IsCodeReader: true, IsSpdxReader: false, IsCodeWriter: true, IsSpdxWriter: true}
+	if agent.ID != wantedAgent.ID || agent.Name != wantedAgent.Name || agent.IsActive != wantedAgent.IsActive || agent.Address != wantedAgent.Address || agent.IsCodeReader != wantedAgent.IsCodeReader || agent.IsSpdxReader != wantedAgent.IsSpdxReader || agent.IsCodeWriter != wantedAgent.IsCodeWriter || agent.IsSpdxWriter != wantedAgent.IsSpdxWriter {
+		t.Errorf("expected %#v, got %#v", wantedAgent, agent)
+	}
+}
+
+func TestCanPutAgentsOneHandlerAsOperatorWithJustAbilities(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "PUT", "/agents/3", `{"is_codereader":true, "is_spdxreader":true, "is_codewriter":false, "is_spdxwriter":false}`, "operator")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.agentsOneHandler), "/agents/{id}")
+	hu.ConfirmNoContentResponse(t, rec)
+
+	// and verify state of database now
+	agent, err := env.db.GetAgentByID(3)
+	if err != nil {
+		t.Errorf("expected nil error, got %v", err)
+	}
+	wantedAgent := &datastore.Agent{ID: 3, Name: "broken-agent", IsActive: false, Address: "example.com", Port: 9003, IsCodeReader: true, IsSpdxReader: true, IsCodeWriter: false, IsSpdxWriter: false}
+	if agent.ID != wantedAgent.ID || agent.Name != wantedAgent.Name || agent.IsActive != wantedAgent.IsActive || agent.Address != wantedAgent.Address || agent.IsCodeReader != wantedAgent.IsCodeReader || agent.IsSpdxReader != wantedAgent.IsSpdxReader || agent.IsCodeWriter != wantedAgent.IsCodeWriter || agent.IsSpdxWriter != wantedAgent.IsSpdxWriter {
+		t.Errorf("expected %#v, got %#v", wantedAgent, agent)
+	}
+}
+
+func TestCannotPutAgentsOneHandlerAsCommenter(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "PUT", "/agents/3", `{"is_active":true, "address":"agentHost", "port":8089, "is_codereader":true, "is_spdxreader":true, "is_codewriter":false, "is_spdxwriter":false}`, "commenter")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.agentsOneHandler), "/agents/{id}")
+	hu.ConfirmAccessDenied(t, rec)
+
+	// and verify state of database now
+	agent, err := env.db.GetAgentByID(3)
+	if err != nil {
+		t.Errorf("expected nil error, got %v", err)
+	}
+	wantedAgent := &datastore.Agent{ID: 3, Name: "broken-agent", IsActive: false, Address: "example.com", Port: 9003, IsCodeReader: true, IsSpdxReader: false, IsCodeWriter: true, IsSpdxWriter: true}
+	if agent.ID != wantedAgent.ID || agent.Name != wantedAgent.Name || agent.IsActive != wantedAgent.IsActive || agent.Address != wantedAgent.Address || agent.IsCodeReader != wantedAgent.IsCodeReader || agent.IsSpdxReader != wantedAgent.IsSpdxReader || agent.IsCodeWriter != wantedAgent.IsCodeWriter || agent.IsSpdxWriter != wantedAgent.IsSpdxWriter {
+		t.Errorf("expected %#v, got %#v", wantedAgent, agent)
+	}
+}
+
+// ===== DELETE /agents/3 =====
+
+func TestCanDeleteAgentsOneHandlerAsAdmin(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "DELETE", "/agents/3", ``, "admin")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.agentsOneHandler), "/agents/{id}")
+	hu.ConfirmNoContentResponse(t, rec)
+
+	// and verify state of database now
+	agents, err := env.db.GetAllAgents()
+	if err != nil {
+		t.Errorf("expected nil error, got %v", err)
+	}
+	if len(agents) != 5 {
+		t.Errorf("expected %d, got %d", 5, len(agents))
+	}
+	agent, err := env.db.GetAgentByID(3)
+	if err == nil {
+		t.Fatalf("expected non-nil error, got nil and %#v", agent)
+	}
+}
+
+func TestCannotDeleteAgentsOneHandlerAsOperator(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "DELETE", "/agents/3", ``, "operator")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.agentsOneHandler), "/agents/{id}")
+	hu.ConfirmAccessDenied(t, rec)
+
+	// and verify state of database has not changed
+	agents, err := env.db.GetAllAgents()
+	if err != nil {
+		t.Errorf("expected nil error, got %v", err)
+	}
+	if len(agents) != 6 {
+		t.Errorf("expected %d, got %d", 6, len(agents))
+	}
+	agent, err := env.db.GetAgentByID(3)
+	if err != nil {
+		t.Errorf("expected nil error, got %v", err)
+	}
+	wantedAgent := &datastore.Agent{ID: 3, Name: "broken-agent", IsActive: false, Address: "example.com", Port: 9003, IsCodeReader: true, IsSpdxReader: false, IsCodeWriter: true, IsSpdxWriter: true}
+	if agent.ID != wantedAgent.ID || agent.IsActive != wantedAgent.IsActive || agent.Name != wantedAgent.Name || agent.Address != wantedAgent.Address || agent.Port != wantedAgent.Port || agent.IsCodeReader != wantedAgent.IsCodeReader || agent.IsSpdxReader != wantedAgent.IsSpdxReader || agent.IsCodeWriter != wantedAgent.IsCodeWriter || agent.IsSpdxWriter != wantedAgent.IsSpdxWriter {
+		t.Errorf("expected %#v, got %#v", wantedAgent, agent)
+	}
+}

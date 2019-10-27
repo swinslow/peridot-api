@@ -1,5 +1,7 @@
 SPDX-License-Identifier: CC-BY-4.0
 
+Add to peridot-db functionality for controller to get just "ready" jobs (e.g. those that have not yet been run, but are set to IsReady == true, and where all prior job IDs are Stopped and OK/Degraded), across all repo pulls
+
 Update containers to Golang 1.13
 
 All POST and maybe PUT handlers currently will probably panic if they fail the type assertion during the AddX() or UpdateX() call. Type assertions should be changed to occur during the data extraction step, should be "t, ok := data.(uint32)" style, and should return error if invalid.

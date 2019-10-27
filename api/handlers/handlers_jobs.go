@@ -5,7 +5,6 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/swinslow/peridot-db/pkg/datastore"
@@ -135,10 +134,6 @@ func (env *Env) jobsSubPostHelper(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, `{"error": "Error parsing value for 'config': %v"}`, err)
 		return
 	}
-
-	log.Printf("=====> NEW JOB CONFIG KV: %#v", jcfg.KV)
-	log.Printf("=====> NEW JOB CONFIG CodeReader: %#v", jcfg.CodeReader)
-	log.Printf("=====> NEW JOB CONFIG SpdxReader: %#v", jcfg.SpdxReader)
 
 	// finally, add the new job
 	newID, err := env.db.AddJobWithConfigs(repopullID, uint32(agentID.(float64)), priorJobIDs, jcfg.KV, jcfg.CodeReader, jcfg.SpdxReader)

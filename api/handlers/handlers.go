@@ -52,4 +52,7 @@ func (env *Env) RegisterHandlers(router *mux.Router) {
 	// /agents -- registered peridot agents
 	router.HandleFunc("/agents", env.validateTokenMiddleware(env.agentsHandler)).Methods("GET", "POST")
 	router.HandleFunc("/agents/{id:[0-9]+}", env.validateTokenMiddleware(env.agentsOneHandler)).Methods("GET", "PUT", "DELETE")
+
+	// /jobs -- job data
+	router.HandleFunc("/jobs/{id:[0-9]+}", env.validateTokenMiddleware(env.jobsOneHandler)).Methods("GET", "PUT", "DELETE")
 }

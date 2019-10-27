@@ -20,6 +20,10 @@ RepoPull and Job times to JSON don't work for non-zero microseconds
 
 Can currently add and delete a job, but not update it or its configs / prior job IDs
 
+Job ID references to prior job IDs (both for priorjob_ids and in configs) are ON DELETE CASCADE, meaning that if the referenced job is deleted, it is silently removed as a prerequisite. 
+  - This should be ON DELETE NO ACTION (or just absent since that's the default) instead, so that the job _and all referencing it_ could be deleted in the same transaction. That would require also enabling a "DeleteJobs()" with multiple Job IDs in peridot-db.
+  - Also, this would be more manageable if configs were updatable (beyond is_ready).
+
 SPDX Element is not started in datastore (other than element type)
 
 API only issues command to something else to start a pull, using gRPC messages

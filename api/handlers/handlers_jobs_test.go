@@ -106,6 +106,137 @@ func TestCannotPostJobsSubHandlerAsBadUser(t *testing.T) {
 	hu.ConfirmInvalidAuth(t, rec, ErrAuthGithub)
 }
 
+// ===== GET /jobs/3 =====
+
+func TestCanGetJobsOneHandlerAsViewer(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "GET", "/jobs/6", "", "viewer")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.jobsOneHandler), "/jobs/{id}")
+	hu.ConfirmOKResponse(t, rec)
+
+	wanted := `{"job": {"id":6, "repopull_id":2, "agent_id":1, "priorjob_ids": [5], "started_at":"2019-05-02T14:09:00Z", "finished_at":"2019-05-02T14:09:10Z", "status":"stopped", "health":"ok", "output":"wrote attributions", "is_ready":true, "config":{}}}`
+	hu.CheckResponse(t, rec, wanted)
+}
+
+func TestCannotGetJobsOneHandlerAsBadUser(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "GET", "/jobs/6", ``, "disabled")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.jobsOneHandler), "/jobs/{id}")
+	hu.ConfirmAccessDenied(t, rec)
+
+	rec, req, env = setupTestEnv(t, "GET", "/jobs/6", ``, "invalid")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.jobsOneHandler), "/jobs/{id}")
+	hu.ConfirmInvalidAuth(t, rec, ErrAuthGithub)
+}
+
+// ===== PUT /jobs/3 =====
+
+func TestCanPutJobsOneHandlerAsOperator(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "PUT", "/jobs/4", `{"is_ready": true}`, "operator")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.jobsOneHandler), "/jobs/{id}")
+	hu.ConfirmNoContentResponse(t, rec)
+
+	// and verify state of database now
+	gotJob, err := env.db.GetJobByID(4)
+	if err != nil {
+		t.Errorf("expected nil error, got %v", err)
+	}
+	wantedJob := &datastore.Job{
+		ID:          4,
+		RepoPullID:  4,
+		AgentID:     4,
+		PriorJobIDs: []uint32{},
+		StartedAt:   time.Time{},
+		FinishedAt:  time.Time{},
+		Status:      datastore.StatusStartup,
+		Health:      datastore.HealthOK,
+		Output:      "",
+		IsReady:     true,
+		Config:      datastore.JobConfig{},
+	}
+	helperCompareJobs(t, wantedJob, gotJob)
+}
+
+func TestCannotPutJobsOneHandlerAsCommenter(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "PUT", "/jobs/4", `{"is_ready": true}`, "commenter")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.jobsOneHandler), "/jobs/{id}")
+	hu.ConfirmAccessDenied(t, rec)
+
+	// and verify state of database now
+	gotJob, err := env.db.GetJobByID(4)
+	if err != nil {
+		t.Errorf("expected nil error, got %v", err)
+	}
+	wantedJob := &datastore.Job{
+		ID:          4,
+		RepoPullID:  4,
+		AgentID:     4,
+		PriorJobIDs: []uint32{},
+		StartedAt:   time.Time{},
+		FinishedAt:  time.Time{},
+		Status:      datastore.StatusStartup,
+		Health:      datastore.HealthOK,
+		Output:      "",
+		IsReady:     false,
+		Config:      datastore.JobConfig{},
+	}
+	helperCompareJobs(t, wantedJob, gotJob)
+}
+
+// ===== DELETE /jobs/3 =====
+
+func TestCanDeleteJobsOneHandlerAsAdmin(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "DELETE", "/jobs/5", ``, "admin")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.jobsOneHandler), "/jobs/{id}")
+	hu.ConfirmNoContentResponse(t, rec)
+
+	// and verify state of database now
+	jobs, err := env.db.GetAllJobsForRepoPull(2)
+	if err != nil {
+		t.Errorf("expected nil error, got %v", err)
+	}
+	if len(jobs) != 4 {
+		t.Errorf("expected %d, got %d", 4, len(jobs))
+	}
+	job, err := env.db.GetJobByID(5)
+	if err == nil {
+		t.Fatalf("expected non-nil error, got nil and %#v", job)
+	}
+}
+
+func TestCannotDeleteJobsOneHandlerAsOperator(t *testing.T) {
+	rec, req, env := setupTestEnv(t, "DELETE", "/jobs/5", ``, "operator")
+	hu.ServeHandler(rec, req, http.HandlerFunc(env.jobsOneHandler), "/jobs/{id}")
+	hu.ConfirmAccessDenied(t, rec)
+
+	// and verify state of database has not changed
+	jobs, err := env.db.GetAllJobsForRepoPull(2)
+	if err != nil {
+		t.Errorf("expected nil error, got %v", err)
+	}
+	if len(jobs) != 5 {
+		t.Errorf("expected %d, got %d", 5, len(jobs))
+	}
+	gotJob, err := env.db.GetJobByID(5)
+	if err != nil {
+		t.Errorf("expected nil error, got %v", err)
+	}
+	wantedJob := &datastore.Job{
+		ID:          5,
+		RepoPullID:  2,
+		AgentID:     1,
+		PriorJobIDs: []uint32{},
+		StartedAt:   time.Date(2019, 5, 2, 14, 7, 0, 0, time.UTC),
+		FinishedAt:  time.Date(2019, 5, 2, 14, 8, 0, 0, time.UTC),
+		Status:      datastore.StatusStopped,
+		Health:      datastore.HealthOK,
+		Output:      "found 57 files with short-form license IDs in 182 files",
+		IsReady:     true,
+		Config:      datastore.JobConfig{},
+	}
+	helperCompareJobs(t, wantedJob, gotJob)
+}
+
+// ===== HELPERS for jobs handler tests =====
+
 func helperCompareJobs(t *testing.T, expected *datastore.Job, got *datastore.Job) {
 	if expected.ID != got.ID {
 		t.Errorf("expected %#v, got %#v", expected.ID, got.ID)

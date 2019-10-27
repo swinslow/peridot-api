@@ -158,6 +158,145 @@ func (env *Env) jobsSubPostHelper(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, `{"id": %d}`, newID)
 }
 
+// ========== HANDLER for /jobs/{id}
+
+func (env *Env) jobsOneHandler(w http.ResponseWriter, r *http.Request) {
+	// responses will be JSON format
+	w.Header().Set("Content-Type", "application/json")
+
+	// check valid request types
+	switch r.Method {
+	case "GET":
+		env.jobsOneGetHelper(w, r)
+	case "PUT":
+		env.jobsOnePutHelper(w, r)
+	case "DELETE":
+		env.jobsOneDeleteHelper(w, r)
+	default:
+		w.Header().Set("Allow", "GET, PUT, DELETE")
+		w.WriteHeader(http.StatusMethodNotAllowed)
+	}
+}
+
+func (env *Env) jobsOneGetHelper(w http.ResponseWriter, r *http.Request) {
+	// get user and check access level
+	user := extractUser(w, r, datastore.AccessViewer)
+	if user == nil {
+		return
+	}
+
+	// sufficient access
+	// extract ID for request
+	jobID, err := extractIDasU32(r)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(w, `{"error": "Missing or invalid ID"}`)
+		return
+	}
+
+	// get job from database
+	job, err := env.db.GetJobByID(jobID)
+	if err != nil {
+		fmt.Fprintf(w, `{"error": "Database retrieval error"}`)
+		return
+	}
+
+	// create map so we return a JSON object
+	jsData := struct {
+		Job *datastore.Job `json:"job"`
+	}{Job: job}
+	js, err := json.Marshal(jsData)
+	if err != nil {
+		fmt.Fprintf(w, `{"error": "JSON marshalling error"}`)
+		return
+	}
+	w.Write(js)
+}
+
+func (env *Env) jobsOnePutHelper(w http.ResponseWriter, r *http.Request) {
+	// get user and check access level
+	user := extractUser(w, r, datastore.AccessOperator)
+	if user == nil {
+		return
+	}
+
+	// sufficient access
+	// extract ID for request
+	jobID, err := extractIDasU32(r)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(w, `{"error": "Missing or invalid ID"}`)
+		return
+	}
+
+	// check job exists in database
+	_, err = env.db.GetJobByID(jobID)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		fmt.Fprintf(w, `{"error": "Unknown job ID"}`)
+		return
+	}
+
+	// parse JSON request
+	js := map[string]interface{}{}
+	err = json.NewDecoder(r.Body).Decode(&js)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(w, `{"error": "Invalid JSON request"}`)
+		return
+	}
+
+	// and extract data; currently, can only update is_ready
+	newIsReadyStr, ok := js["is_ready"]
+	if !ok {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(w, `{"error": "No new value specified for is_ready"}`)
+		return
+	}
+	newIsReady := newIsReadyStr.(bool)
+
+	// modify the job data
+	err = env.db.UpdateJobIsReady(jobID, newIsReady)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintf(w, `{"error": "Unable to update job"}`)
+		return
+	}
+
+	// success!
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (env *Env) jobsOneDeleteHelper(w http.ResponseWriter, r *http.Request) {
+	// get user and check access level
+	user := extractUser(w, r, datastore.AccessAdmin)
+	if user == nil {
+		return
+	}
+
+	// sufficient access
+	// extract ID for request
+	jobID, err := extractIDasU32(r)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(w, `{"error": "Missing or invalid ID"}`)
+		return
+	}
+
+	// delete the job
+	err = env.db.DeleteJob(jobID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintf(w, `{"error": "Unable to delete job"}`)
+		return
+	}
+
+	// success!
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// ========== HELPERS for parsing job details
+
 func (env *Env) helperParseJobConfig(config interface{}) (*datastore.JobConfig, error) {
 	jcfg := &datastore.JobConfig{KV: map[string]string{}}
 

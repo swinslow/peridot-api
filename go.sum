@@ -43,6 +43,12 @@ github.com/swinslow/peridot-db v0.0.0-20191027020756-947f9b157cf7 h1:7lgegJrchoY
 github.com/swinslow/peridot-db v0.0.0-20191027020756-947f9b157cf7/go.mod h1:/qv8Hgw22S/OZUvY0H9C1DJ9lHc1zUwmlywiN4DAN30=
 github.com/swinslow/peridot-db v0.0.0-20191027024011-4326b491c14b h1:mU6I/J+BVmR5WhUeyAJbUuR45tzxMMo23DPZY6mcKfw=
 github.com/swinslow/peridot-db v0.0.0-20191027024011-4326b491c14b/go.mod h1:/qv8Hgw22S/OZUvY0H9C1DJ9lHc1zUwmlywiN4DAN30=
+github.com/swinslow/peridot-db v0.0.0-20191027151613-d4154cf67ca5 h1:Hno9TGO965o2WFji2GeNabo0mPzUsBsN7Ji2yxocH3g=
+github.com/swinslow/peridot-db v0.0.0-20191027151613-d4154cf67ca5/go.mod h1:/qv8Hgw22S/OZUvY0H9C1DJ9lHc1zUwmlywiN4DAN30=
+github.com/swinslow/peridot-db v0.0.0-20191027154922-4a7deeb469f3 h1:YCwPjopFgM6XVcpArdG/ohRgyxqgR3AGrov1iImEFUw=
+github.com/swinslow/peridot-db v0.0.0-20191027154922-4a7deeb469f3/go.mod h1:/qv8Hgw22S/OZUvY0H9C1DJ9lHc1zUwmlywiN4DAN30=
+github.com/swinslow/peridot-db v0.0.0-20191027155627-429e7ddc8c33 h1:AVwBtsih4LUrL/KQEW1b962ZjEK4xmG0ucOapSj/OTc=
+github.com/swinslow/peridot-db v0.0.0-20191027155627-429e7ddc8c33/go.mod h1:/qv8Hgw22S/OZUvY0H9C1DJ9lHc1zUwmlywiN4DAN30=
 github.com/yudai/gojsondiff v1.0.0 h1:27cbfqXLVEJ1o8I6v3y9lg8Ydm53EKqHXAOMxEGlCOA=
 github.com/yudai/gojsondiff v1.0.0/go.mod h1:AY32+k2cwILAkW1fbgxQ5mUmMiZFgLIV+FBNExI05xg=
 github.com/yudai/golcs v0.0.0-20170316035057-ecda9a501e82 h1:BHyfKlQyqbsFN5p3IfnEUduWvb9is428/nNb5L3U01M=

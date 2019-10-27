@@ -97,7 +97,7 @@ func createMockDB() *mockDB {
 			KV:         map[string]string{"prefer": "primary"},
 			CodeReader: nil,
 			SpdxReader: map[string]datastore.JobPathConfig{
-				"primary": datastore.JobPathConfig{PriorJobID: 5},
+				"primary": datastore.JobPathConfig{Value: "/path/wherever"},
 				"godeps":  datastore.JobPathConfig{PriorJobID: 7},
 			},
 		}},

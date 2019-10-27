@@ -46,6 +46,8 @@ func (env *Env) RegisterHandlers(router *mux.Router) {
 
 	// /repopulls -- repo pull data
 	router.HandleFunc("/repopulls/{id:[0-9]+}", env.validateTokenMiddleware(env.repoPullsOneHandler)).Methods("GET", "DELETE")
+	// and a repopull's jobs
+	router.HandleFunc("/repopulls/{id:[0-9]+}/jobs", env.validateTokenMiddleware(env.jobsSubHandler)).Methods("GET", "POST")
 
 	// /agents -- registered peridot agents
 	router.HandleFunc("/agents", env.validateTokenMiddleware(env.agentsHandler)).Methods("GET", "POST")

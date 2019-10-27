@@ -1,0 +1,23 @@
+SPDX-License-Identifier: CC-BY-4.0
+
+1) WEBAPP: user goes to login link
+2) API: => /auth/login => API sends redirect to Github OAuth
+3) Github: user logs in via Github
+4) Github: user is redirected back to API
+5) API: => /auth/redirect => API calls Github; confirms code and
+   gets username; creates JWT; sends HTML with JS to save in
+   localstorage and immediately redirect to /
+   [QUERY: does this save in localstorage that webapp can access?]
+6) WEBAPP: checks localstorage, notices that JWT is present,
+   uses it to access API
+
+If someone wants to access the API directly, they can view the
+JWT in the webapp and use it for API calls.
+
+
+Links:
+
+Example of short redirect with localstorage:
+https://charlesxu.org/2019/02/04/jwt-third-party-oauth-in-single-page-app/
+
+https://zapier.com/engineering/apikey-oauth-jwt/

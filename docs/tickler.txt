@@ -1,0 +1,25 @@
+SPDX-License-Identifier: CC-BY-4.0
+
+Update containers to Golang 1.13
+
+All POST and maybe PUT handlers currently will probably panic if they fail the type assertion during the AddX() or UpdateX() call. Type assertions should be changed to occur during the data extraction step, should be "t, ok := data.(uint32)" style, and should return error if invalid.
+
+When not found, API handlers should return 404; believe they are currently returning 200 (at least for repopulls/id)
+
+Consider whether to add overall GET handler for repo/, repopulls/, etc., or keep as nested
+
+RepoBranch branch names need to be limited to appropriate characters only (alphanumeric plus ?)
+  - https://stackoverflow.com/questions/3651860/which-characters-are-illegal-within-a-branch-name
+  - https://mirrors.edge.kernel.org/pub/software/scm/git/docs/git-check-ref-format.html
+
+RepoPull handler is not currently testing started_at, finished_at, or spdx_id, assumes all are zero values
+
+RepoPull and Job times to JSON don't work for non-zero microseconds
+
+Can currently add and delete a job, but not update it or its configs / prior job IDs
+
+SPDX Element is not started in datastore (other than element type)
+
+API only issues command to something else to start a pull, using gRPC messages
+
+- Check that database schema exclude matches for e.g. project ID + subproject name; subproject ID + repo name; etc.

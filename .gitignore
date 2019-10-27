@@ -3,7 +3,6 @@
 .DS_Store
 .vscode
 scratch/
-notes/
 
 node_modules
 .pnp

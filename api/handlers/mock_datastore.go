@@ -892,6 +892,38 @@ func (mdb *mockDB) GetAllJobsForRepoPull(rpID uint32) ([]*datastore.Job, error) 
 	return js, nil
 }
 
+// GetJobsByIDs returns all of the jobs in the database with the given
+// IDs. If any ID is not present, it will be silently omitted (e.g.,
+// no error will be returned); the caller should check to confirm the
+// received jobs match those that were expected.
+func (mdb *mockDB) GetJobsByIDs(ids []uint32) ([]*datastore.Job, error) {
+	// convert slice of IDs to a map, to make it easier to query
+	wantIDs := map[uint32]bool{}
+	for _, id := range ids {
+		wantIDs[id] = true
+	}
+
+	js := []*datastore.Job{}
+	for _, j := range mdb.mockJobs {
+		if _, ok := wantIDs[j.ID]; ok {
+			js = append(js, j)
+		}
+	}
+	return js, nil
+}
+
+// GetReadyJobs returns up to n jobs that are "ready", where "ready"
+// means that BOTH (1) IsReady is true and (2) all jobs from its
+// PriorJobIDs are StatusStopped and either HealthOK or HealthDegraded.
+// If n is 0 then all "ready" jobs are returned.
+func (mdb *mockDB) GetReadyJobs(n uint32) ([]*datastore.Job, error) {
+	// NOTE that among the current set of test jobs, none would be
+	// considered "ready", as none satisfy the full set of "ready"
+	// criteria. Need to modify to make at least a couple of them
+	// "ready" for testing purposes.
+	return mdb.GetJobsByIDs([]uint32{})
+}
+
 // GetJobByID returns the job in the database with the given ID.
 func (mdb *mockDB) GetJobByID(id uint32) (*datastore.Job, error) {
 	for _, j := range mdb.mockJobs {

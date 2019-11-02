@@ -1,6 +1,8 @@
 SPDX-License-Identifier: CC-BY-4.0
 
-Add to peridot-db functionality for controller to get just "ready" jobs (e.g. those that have not yet been run, but are set to IsReady == true, and where all prior job IDs are Stopped and OK/Degraded), across all repo pulls
+Add to peridot-api some test jobs and a handler to get just "ready" jobs (e.g. those that have not yet been run, but are set to IsReady == true, and where all prior job IDs are Stopped and OK/Degraded), across all repo pulls; with "max #" query value.
+
+Getting Job info currently does three separate SELECT routines, and combines the data using program logic. This could very likely be faster, more efficient and safer using a single SQL call and handling the logic via SQL joins.
 
 Update containers to Golang 1.13
 

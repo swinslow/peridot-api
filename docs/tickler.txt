@@ -1,5 +1,10 @@
 SPDX-License-Identifier: CC-BY-4.0
 
+Currently the database is initialized by peridot-api. That means that other services needing to touch the DB (such as jobrunner) should not also be initializing it.
+More likely, one of the following should be the case:
+- there is a single centralize "initialize things" call, possibly in a separate repo from current ones? OR
+- keep it the way it is, but enable all services other than the API to "wait for DB" -- not just for it to be active, but for table creation to be done
+
 Add to peridot-api some test jobs and a handler to get just "ready" jobs (e.g. those that have not yet been run, but are set to IsReady == true, and where all prior job IDs are Stopped and OK/Degraded), across all repo pulls; with "max #" query value.
 
 Getting Job info currently does three separate SELECT routines, and combines the data using program logic. This could very likely be faster, more efficient and safer using a single SQL call and handling the logic via SQL joins.

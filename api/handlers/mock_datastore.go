@@ -989,6 +989,21 @@ func (mdb *mockDB) UpdateJobIsReady(id uint32, ready bool) error {
 	return fmt.Errorf("Job not found with ID %d", id)
 }
 
+// UpdateJobStatus sets the status variables for this job.
+func (mdb *mockDB) UpdateJobStatus(id uint32, startedAt time.Time, finishedAt time.Time, status datastore.Status, health datastore.Health, output string) error {
+	for _, j := range mdb.mockJobs {
+		if j.ID == id {
+			j.StartedAt = startedAt
+			j.FinishedAt = finishedAt
+			j.Status = status
+			j.Health = health
+			j.Output = output
+			return nil
+		}
+	}
+	return fmt.Errorf("Job not found with ID %d", id)
+}
+
 // DeleteJob deletes an existing Job with the given ID.
 // It returns nil on success or an error if failing.
 func (mdb *mockDB) DeleteJob(id uint32) error {

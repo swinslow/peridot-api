@@ -16,11 +16,11 @@ require (
 	github.com/onsi/gomega v1.7.0 // indirect
 	github.com/sergi/go-diff v1.0.0 // indirect
 	github.com/stretchr/testify v1.4.0 // indirect
-	github.com/swinslow/peridot-db v0.0.0-20191113003147-a66cd2e9bcab
+	github.com/swinslow/peridot-db v0.0.0-20191124171353-69b70c2aef04
 	github.com/yudai/gojsondiff v1.0.0
 	github.com/yudai/golcs v0.0.0-20170316035057-ecda9a501e82 // indirect
 	github.com/yudai/pp v2.0.1+incompatible // indirect
-	golang.org/x/net v0.0.0-20191112182307-2180aed22343 // indirect
-	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
+	golang.org/x/net v0.0.0-20191119073136-fc4aabc6c914 // indirect
+	golang.org/x/oauth2 v0.0.0-20191122200657-5d9234df094c
 	google.golang.org/appengine v1.6.5 // indirect
 )
